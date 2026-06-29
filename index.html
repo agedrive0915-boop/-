@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>リソース管理 v3.2</title>
+<title>リソース管理 v3.4</title>
 <style>
 :root{
   --bg0:#f2f2f7;--bg1:#fff;--bg2:#f2f2f7;--bg3:#e5e5ea;
@@ -203,12 +203,12 @@ if('caches' in window){
       <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--blue)">🔗 Googleスプレッドシート連携</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:10px">GASのデプロイURLを入力してください</div>
       <input id="conf-gas-url" class="finp" placeholder="https://script.google.com/macros/s/..."
-        value="${GAS_URL}" style="font-size:12px;margin-bottom:8px">
+        id="conf-gas-url-inp" style="font-size:12px;margin-bottom:8px">
       <button onclick="saveGasUrl()"
         style="width:100%;padding:11px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:6px">
         URLを保存して接続テスト
       </button>
-      <div id="conf-gas-result" style="font-size:12px;color:var(--t3)">${IS_ONLINE?"✓ 接続済み":"未接続"}</div>
+      <div id="conf-gas-result" style="font-size:12px;color:var(--t3)">接続状態を確認中...</div>
     </div>
     <!-- データ保存状態 -->
     <div class="card" style="margin-bottom:10px">
@@ -1826,7 +1826,7 @@ function saveGasUrl(){
   if(!url){ if(res)res.textContent="URLを入力してください"; return; }
   localStorage.setItem("rm_gas_url", url);
   if(res) res.textContent="接続テスト中...";
-  fetch(url+"?action=ping",{redirect:"follow"})
+  fetch(url+"?action=ping",{method:"GET",redirect:"follow"})
     .then(r=>r.json())
     .then(d=>{
       if(d.ok){ if(res)res.textContent="✓ 接続成功！再読み込みします..."; setTimeout(()=>location.reload(),1500); }
@@ -1846,6 +1846,7 @@ function renderConf(){
   const savedAt = raw ? (JSON.parse(raw).savedAt||"").replace("T"," ").slice(0,16) : "-";
   const storedVersion = raw ? (JSON.parse(raw).version||"?") : "-";
 
+  const gasInp=document.getElementById("conf-gas-url");if(gasInp)gasInp.value=GAS_URL;
   document.getElementById("conf-storage-status").innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
       <div class="kpi" style="padding:10px">
@@ -1993,11 +1994,18 @@ function saveAll(){
   SYNCING = true;
   setSyncBadge("saving");
   const body = JSON.stringify({action:"save",..._buildPayload()});
-  fetch(GAS_URL, {method:"POST", headers:{"Content-Type":"text/plain"}, body, redirect:"follow"})
-    .then(r=>r.json())
-    .then(d=>{ setSyncBadge(d.ok?"ok":"error"); })
-    .catch(()=>setSyncBadge("error"))
-    .finally(()=>{ SYNCING=false; });
+  // GASはCORSヘッダーを返さないためno-corsで送信
+// no-corsはレスポンスが読めないがデータは届く
+fetch(GAS_URL, {
+  method:"POST",
+  mode:"no-cors",
+  headers:{"Content-Type":"text/plain"},
+  body,
+  redirect:"follow"
+})
+  .then(()=>{ setSyncBadge("ok"); })
+  .catch(()=>setSyncBadge("error"))
+  .finally(()=>{ SYNCING=false; });
 }
 function setSyncBadge(state){
   const el=document.getElementById("sync-badge");
@@ -2038,7 +2046,7 @@ function loadAll(){
   renderHeader(); renderDash(); // ローカルで即時描画
   setSyncBadge(IS_ONLINE ? "saving" : "off");
   if(!IS_ONLINE){ setSyncBadge("off"); return; }
-  fetch(GAS_URL + "?action=load", {redirect:"follow"})
+  fetch(GAS_URL + "?action=load", {method:"GET", redirect:"follow"})
     .then(r=>r.json())
     .then(d=>{
       if(!d.ok) throw new Error(d.error||"load failed");
