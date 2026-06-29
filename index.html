@@ -1,0 +1,2179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>リソース管理 v3.2</title>
+<style>
+:root{
+  --bg0:#f2f2f7;--bg1:#fff;--bg2:#f2f2f7;--bg3:#e5e5ea;
+  --t1:#1c1c1e;--t2:#3a3a3c;--t3:#8e8e93;--sep:rgba(60,60,67,.12);
+  --blue:#007aff;--blue-bg:#e8f2ff;--blue-bd:#b5d4f8;
+  --green:#34c759;--green-bg:#edfaf1;
+  --red:#ff3b30;--red-bg:#fff0ef;
+  --orange:#ff9500;--orange-bg:#fff8ee;
+  --purple:#5856d6;--purple-bg:#f0f0ff;
+  --pink:#ff2d55;--pink-bg:#fff0f4;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+  --nav:56px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg0:#000;--bg1:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --t1:#fff;--t2:#ebebf5;--t3:#8e8e93;--sep:rgba(255,255,255,.1);
+    --blue:#0a84ff;--blue-bg:#0a2040;--blue-bd:#1a4a80;
+    --green:#30d158;--green-bg:#0e2a14;
+    --red:#ff453a;--red-bg:#2d0f0e;
+    --orange:#ff9f0a;--orange-bg:#2c1e00;
+    --purple:#7877d6;--purple-bg:#1a1a3a;
+    --pink:#ff375f;--pink-bg:#2d0a14;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg0);font-family:-apple-system,'Hiragino Sans',sans-serif;color:var(--t1);}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;}
+.hdr{padding:calc(var(--safe-top) + 10px) 16px 10px;background:rgba(242,242,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--sep);flex-shrink:0;z-index:20;}
+@media(prefers-color-scheme:dark){.hdr{background:rgba(28,28,30,.92);}}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;}
+.hdr h1{font-size:18px;font-weight:700;}
+.hdr-sub{font-size:11px;color:var(--t3);margin-top:2px;}
+.bdg{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;display:inline-block;}
+.nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav) + var(--safe-bot));background:rgba(242,242,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;z-index:50;}
+@media(prefers-color-scheme:dark){.nav{background:rgba(28,28,30,.92);}}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;cursor:pointer;padding-bottom:var(--safe-bot);color:var(--t3);font-size:9px;font-weight:500;}
+.nb.on{color:var(--blue);}
+.nb svg{width:22px;height:22px;}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav) + var(--safe-bot) + 74px);display:none;}
+.screen.on{display:block;}
+.pad{padding:12px 16px 0;}
+.sec{padding:12px 16px 0;}
+.sec-title{font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding:0 2px;}
+.card{background:var(--bg1);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.kpi3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.kpi{background:var(--bg1);border-radius:12px;padding:12px 10px;text-align:center;}
+.kpi-l{font-size:10px;color:var(--t3);margin-bottom:4px;}
+.kpi-v{font-size:20px;font-weight:700;}
+.cap-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;position:relative;}
+.cap-range{position:absolute;top:0;height:100%;border-radius:4px;opacity:.22;}
+.cap-fill{height:100%;border-radius:4px;transition:width .4s;}
+.cap-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:2px;}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.tag{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;display:inline-block;}
+.pill{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;display:inline-block;}
+.sched-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--sep);}
+.sched-row:last-child{border-bottom:none;}
+.tab-scroll{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tab-scroll::-webkit-scrollbar{display:none;}
+.tab-btn{padding:5px 14px;border-radius:20px;border:.5px solid var(--sep);background:var(--bg1);color:var(--t3);font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-weight:500;}
+.tab-btn.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+.alert-box{background:var(--red-bg);border-radius:14px;padding:13px 16px;margin-bottom:10px;}
+.ratio-bar{height:18px;border-radius:9px;background:var(--bg3);overflow:hidden;display:flex;margin-bottom:8px;}
+.ratio-seg{height:100%;}
+.legend-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2);}
+.legend-sq{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+/* sheet */
+.sheet{position:fixed;inset:0;background:var(--bg0);z-index:100;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s cubic-bezier(.22,.68,0,1.2);}
+.sheet.open{transform:none;}
+.sheet-hdr{padding:calc(var(--safe-top) + 12px) 16px 10px;background:rgba(242,242,247,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--sep);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+@media(prefers-color-scheme:dark){.sheet-hdr{background:rgba(28,28,30,.9);}}
+.btn-cancel{background:none;border:none;color:var(--blue);font-size:15px;cursor:pointer;padding:4px 0;}
+.btn-save{background:var(--blue);border:none;border-radius:20px;padding:7px 18px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(var(--safe-bot) + 24px);}
+/* form */
+.fc{background:var(--bg1);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+.fc-title{font-size:12px;font-weight:600;color:var(--t3);margin-bottom:12px;}
+.flbl{font-size:12px;color:var(--t3);font-weight:500;margin-bottom:5px;display:block;}
+.finp{width:100%;background:var(--bg2);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);outline:none;-webkit-appearance:none;}
+.finp:focus{outline:2px solid var(--blue);outline-offset:-2px;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.h-banner{border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.h-big{font-size:38px;font-weight:800;line-height:1;}
+/* 曜日チェックボックス */
+.day-checks{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;}
+.day-cb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+.day-cb input{display:none;}
+.day-cb span{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:.5px solid var(--sep);background:var(--bg2);color:var(--t3);transition:all .15s;}
+.day-cb input:checked+span{background:var(--blue);color:#fff;border-color:var(--blue);}
+.day-cb .day-label{font-size:9px;color:var(--t3);}
+/* schedule block */
+.sched-block{background:var(--bg2);border-radius:12px;padding:12px;margin-bottom:8px;position:relative;}
+.sched-block-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.type-toggle{display:flex;gap:4px;}
+.type-btn{padding:4px 12px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:var(--bg3);color:var(--t3);}
+.type-btn.on-long{background:var(--blue);color:#fff;}
+.type-btn.on-short{background:var(--purple);color:#fff;}
+.type-btn.on-other{background:var(--orange);color:#fff;}
+.rm-btn{background:var(--red-bg);border:none;border-radius:50%;width:26px;height:26px;color:var(--red);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* cal */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.cal-dh{font-size:10px;color:var(--t3);text-align:center;padding:4px 0;}
+.cal-day{min-height:56px;background:var(--bg2);border-radius:6px;padding:4px;}
+.cal-day.today{background:var(--blue-bg);border:.5px solid var(--blue);}
+.cal-num{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:2px;}
+.cal-day.today .cal-num{color:var(--blue);}
+.cal-ev{font-size:9px;padding:2px 4px;border-radius:4px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.3;}
+.wl-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;}
+.wl-fill{height:100%;border-radius:3px;}
+.chevron{display:inline-block;transition:transform .2s;color:var(--t3);font-size:18px;}
+.chevron.open{transform:rotate(90deg);}
+/* fab / toast */
+.fab{position:fixed;bottom:calc(var(--nav) + var(--safe-bot) + 14px);right:18px;width:54px;height:54px;border-radius:50%;background:var(--blue);border:none;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,122,255,.35);z-index:40;}
+.toast{position:fixed;bottom:calc(var(--nav) + var(--safe-bot) + 14px);left:50%;transform:translateX(-50%) translateY(16px);background:rgba(20,20,20,.88);color:#fff;border-radius:24px;padding:10px 24px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+<script>
+// キャッシュ・Service Worker を強制クリア
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  });
+}
+if('caches' in window){
+  caches.keys().then(keys=>{
+    keys.forEach(k=>caches.delete(k));
+  });
+}
+</script>
+</head>
+<body>
+<div id="app">
+
+<div class="hdr">
+  <div class="hdr-row">
+    <div><h1 id="hdr-title">リソース管理</h1><div class="hdr-sub" id="hdr-sub"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div style="display:flex;gap:6px" id="hdr-badges"></div>
+      <div id="sync-badge" style="font-size:10px;color:var(--t3)">読み込み中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ダッシュボード -->
+<div class="screen on" id="sc-dash">
+  <div class="pad" style="padding-top:14px"><div class="kpi3" id="d-kpi"></div></div>
+  <div class="sec"><div class="sec-title">キャパシティ一覧</div><div id="d-cap"></div></div>
+  <div class="sec"><div class="sec-title">アラート</div><div id="d-alert"></div></div>
+  <div class="sec"><div class="sec-title">タスク分布（月間）</div><div class="card" id="d-dist"></div></div>
+</div>
+
+<!-- 案件 -->
+<div class="screen" id="sc-proj">
+  <div style="padding:10px 16px 0;position:relative">
+    <input id="search-inp" class="finp" style="padding-left:34px;border-radius:22px;font-size:14px" placeholder="案件を検索..." oninput="renderProj()">
+    <span style="position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--t3)">🔍</span>
+  </div>
+  <div class="tab-scroll" id="proj-tabs"></div>
+  <div style="padding:0 16px"><div class="sec-title" id="proj-count"></div></div>
+  <div style="padding:0 16px" id="proj-list"></div>
+</div>
+
+<!-- メンバー -->
+<div class="screen" id="sc-member">
+  <div class="sec" style="padding-top:14px"><div class="sec-title">メンバー別稼働</div><div id="m-list"></div></div>
+</div>
+
+<!-- カレンダー -->
+<div class="screen" id="sc-cal">
+  <div class="pad" style="padding-top:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="calPrev()" style="background:none;border:none;font-size:24px;color:var(--blue);cursor:pointer">‹</button>
+      <div id="cal-title" style="font-size:16px;font-weight:700"></div>
+      <button onclick="calNext()" style="background:none;border:none;font-size:24px;color:var(--blue);cursor:pointer">›</button>
+    </div>
+    <div class="cal-grid" id="cal-hdr"></div>
+    <div class="cal-grid" id="cal-body"></div>
+  </div>
+  <div class="sec" style="margin-top:4px"><div class="sec-title">投稿スケジュール</div><div id="cal-sched"></div></div>
+</div>
+
+<!-- 設定 -->
+<div class="screen" id="sc-conf">
+  <div class="pad" style="padding-top:14px">
+
+    <!-- GAS 連携設定 -->
+    <div class="card" style="margin-bottom:10px;border:.5px solid var(--blue)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--blue)">🔗 Googleスプレッドシート連携</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">GASのデプロイURLを入力してください</div>
+      <input id="conf-gas-url" class="finp" placeholder="https://script.google.com/macros/s/..."
+        value="${GAS_URL}" style="font-size:12px;margin-bottom:8px">
+      <button onclick="saveGasUrl()"
+        style="width:100%;padding:11px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:6px">
+        URLを保存して接続テスト
+      </button>
+      <div id="conf-gas-result" style="font-size:12px;color:var(--t3)">${IS_ONLINE?"✓ 接続済み":"未接続"}</div>
+    </div>
+    <!-- データ保存状態 -->
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">💾 データ保存状態</div>
+      <div id="conf-storage-status"></div>
+    </div>
+
+    <!-- バックアップ・復元 -->
+    <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px;padding:0 2px">バックアップ / 復元</div>
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="exportData()"
+          style="width:100%;padding:13px;border-radius:12px;border:.5px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-size:14px;font-weight:600;cursor:pointer;text-align:left">
+          📥 バックアップをダウンロード
+          <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:.8">全データをJSONファイルで保存</div>
+        </button>
+        <label style="width:100%;padding:13px;border-radius:12px;border:.5px solid var(--green);background:var(--green-bg);color:var(--green);font-size:14px;font-weight:600;cursor:pointer;display:block;box-sizing:border-box">
+          📤 バックアップから復元
+          <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:.8">JSONファイルを選択してインポート</div>
+          <input type="file" accept=".json" onchange="importData(this.files[0])" style="display:none">
+        </label>
+      </div>
+    </div>
+
+    <!-- システム情報 -->
+    <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px;padding:0 2px">システム情報</div>
+    <div class="card" style="margin-bottom:10px">
+      <div id="conf-sysinfo"></div>
+    </div>
+
+    <!-- メンバー管理 -->
+    <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px;padding:0 2px">メンバー管理</div>
+    <div class="card" style="margin-bottom:10px">
+      <div id="conf-members"></div>
+      <button onclick="openMbrSheet(null)"
+        style="width:100%;margin-top:10px;padding:11px;border-radius:10px;border:.5px dashed var(--blue);background:transparent;color:var(--blue);font-size:13px;font-weight:600;cursor:pointer">
+        ＋ メンバーを追加
+      </button>
+    </div>
+
+    <!-- 危険ゾーン -->
+    <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:8px;padding:0 2px">⚠ 危険ゾーン</div>
+    <div class="card" style="border:.5px solid var(--red);margin-bottom:10px">
+      <button onclick="resetData()"
+        style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--red-bg);color:var(--red);font-size:14px;font-weight:600;cursor:pointer;text-align:left">
+        🗑 全データをリセット
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:.8">初期状態に戻します（取り消し不可）</div>
+      </button>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- 分析 -->
+<div class="screen" id="sc-anal">
+  <div class="tab-scroll" id="anal-tabs"></div>
+  <div id="anal-body" style="padding:0 16px"></div>
+</div>
+
+<button class="fab" onclick="onFab()">+</button>
+
+<nav class="nav">
+  <button class="nb on" id="nb-dash" onclick="goNav('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>ダッシュ</span>
+  </button>
+  <button class="nb" id="nb-proj" onclick="goNav('proj')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>案件</span>
+  </button>
+  <button class="nb" id="nb-member" onclick="goNav('member')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>メンバー</span>
+  </button>
+  <button class="nb" id="nb-cal" onclick="goNav('cal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>カレンダー</span>
+  </button>
+  <button class="nb" id="nb-anal" onclick="goNav('anal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>分析</span>
+  </button>
+  <button class="nb" id="nb-conf" onclick="goNav('conf')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>設定</span>
+  </button>
+</nav>
+
+<!-- 案件編集シート -->
+<div class="sheet" id="proj-sheet">
+  <div class="sheet-hdr">
+    <button class="btn-cancel" onclick="closeSheet('proj-sheet')">キャンセル</button>
+    <span id="ps-title" style="font-size:15px;font-weight:600">案件編集</span>
+    <button class="btn-save" onclick="saveProjSheet()">保存</button>
+  </div>
+  <div class="sheet-body" id="ps-body"></div>
+</div>
+
+<!-- メンバー編集シート -->
+<div class="sheet" id="mbr-sheet">
+  <div class="sheet-hdr">
+    <button class="btn-cancel" onclick="closeSheet('mbr-sheet')">キャンセル</button>
+    <span style="font-size:15px;font-weight:600">メンバー設定</span>
+    <button class="btn-save" onclick="saveMbrSheet()">保存</button>
+  </div>
+  <div class="sheet-body" id="mbr-body"></div>
+</div>
+
+<!-- 実績入力シート -->
+<div class="sheet" id="act-sheet">
+  <div class="sheet-hdr">
+    <button class="btn-cancel" onclick="closeSheet('act-sheet')">キャンセル</button>
+    <span style="font-size:15px;font-weight:600">実績入力</span>
+    <button class="btn-save" onclick="saveActSheet()">保存</button>
+  </div>
+  <div class="sheet-body" id="act-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  定数・ユーティリティ
+// ═══════════════════════════════════════════════════════════════════
+const WEEK_DAYS = ["月","火","水","木","金","土","日"]; // 0=月…6=日
+const CAL_DAYS  = ["日","月","火","水","木","金","土"]; // JS getDay()
+const MEMBER_COLORS = ["#007aff","#34c759","#ff9500","#5856d6","#ff3b30","#ff2d55","#5ac8fa","#6f42c1","#20c997","#ff6b35"];
+const CC={}; let ci=0;
+function mc(n){if(!CC[n])CC[n]=MEMBER_COLORS[ci++%MEMBER_COLORS.length];return CC[n];}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2300);}
+function openSheet(id){requestAnimationFrame(()=>document.getElementById(id).classList.add("open"));}
+function closeSheet(id){document.getElementById(id).classList.remove("open");}
+
+// ═══════════════════════════════════════════════════════════════════
+//  データ定義
+//
+//  scheduleGroups: 投稿グループ単位で管理
+//  {
+//    id, type:"ロング"|"ショート"|"その他",
+//    days: ["月","木","土"],   ← 複数曜日
+//    time: "19:00",
+//    freq: "毎週"|"隔週"|"月1"|"月2"|"不定期",
+//    note: ""
+//  }
+//
+//  タスク工数: 1日あたりの作業時間で設定 → 月間自動集計
+//  {
+//    role, member,
+//    dailyMin, dailyStd, dailyMax,  ← 1日あたりh
+//    daysPerMonth,                   ← 月あたり作業日数（自動算出 or 手入力）
+//    actual: null|number (月実績h)
+//  }
+// ═══════════════════════════════════════════════════════════════════
+
+let MEMBERS = [
+  {id:1,name:"橋下",  color:"#007aff",maxCap:160,weekCap:40},
+  {id:2,name:"藤井",  color:"#34c759",maxCap:160,weekCap:40},
+  {id:3,name:"田中",  color:"#ff9500",maxCap:160,weekCap:40},
+  {id:4,name:"板垣",  color:"#5856d6",maxCap:160,weekCap:40},
+  {id:5,name:"猪谷",  color:"#ff3b30",maxCap:220,weekCap:55},
+  {id:6,name:"熊野",  color:"#ff2d55",maxCap:160,weekCap:40},
+  {id:7,name:"松元",  color:"#5ac8fa",maxCap:160,weekCap:40},
+  {id:8,name:"梶山",  color:"#6f42c1",maxCap:160,weekCap:40},
+  {id:9,name:"伊東",  color:"#20c997",maxCap:160,weekCap:40},
+  {id:10,name:"揚妻", color:"#ff6b35",maxCap:160,weekCap:40},
+];
+
+// 手動投稿イベント（カレンダー手動登録用）
+let MANUAL_EVENTS = [
+  {id:1,projId:7,type:"ロング", date:"2025-07-03",time:"19:00",note:"",actual:false},
+  {id:2,projId:7,type:"ショート",date:"2025-07-08",time:"12:00",note:"",actual:false},
+  {id:3,projId:7,type:"ロング", date:"2025-07-15",time:"19:00",note:"",actual:false},
+];
+
+let PROJECTS = [
+  {
+    id:1, type:"運用", name:"みんみん先生", status:"確認待ち",
+    tasks:[
+      {id:1,role:"サムネイル",  member:"猪谷", dailyMin:0.4, dailyStd:0.5, dailyMax:0.75, daysPerMonth:60, actual:null},
+      {id:2,role:"週報・管理",  member:"伊東", dailyMin:1.5, dailyStd:2,   dailyMax:3,    daysPerMonth:4,  actual:null},
+      {id:3,role:"ロング編集",  member:"外注", dailyMin:3,   dailyStd:4,   dailyMax:6,    daysPerMonth:4,  actual:null},
+    ],
+    scheduleMode:"fixed",
+    scheduleGroups:[
+      {id:1,type:"ロング",  days:["木"],              time:"18:00",freq:"毎週",note:""},
+      {id:2,type:"ショート",days:["土","日"],          time:"12:00",freq:"毎週",note:""},
+    ],
+    volumeTargets:{long:4,short:8},
+    meeting:{enabled:true,  day:"火",time:"19:00",duration:1},
+    owners:{front:"",producer:"",director:""},
+    shooting:{enabled:false,hours:0,travelH:0,timesPerMonth:0,cameraman:""},
+    planning:{countPerMonth:0,hPerPlan:0},
+    deadline:""
+  },
+  {
+    id:2, type:"運用", name:"SESの虎", status:"企画中",
+    tasks:[
+      {id:1,role:"サムネイル",  member:"猪谷", dailyMin:0.4, dailyStd:0.5, dailyMax:0.75, daysPerMonth:36, actual:null},
+      {id:2,role:"企画",        member:"猪谷", dailyMin:0.3, dailyStd:0.4, dailyMax:0.6,  daysPerMonth:15, actual:null},
+      {id:3,role:"ロング編集",  member:"猪谷", dailyMin:6,   dailyStd:8,   dailyMax:12,   daysPerMonth:4,  actual:null},
+      {id:4,role:"週報・管理",  member:"伊東", dailyMin:1.5, dailyStd:2,   dailyMax:3,    daysPerMonth:4,  actual:null},
+    ],
+    scheduleMode:"fixed",
+    scheduleGroups:[
+      {id:1,type:"ロング",  days:["火"],               time:"18:00",freq:"毎週",note:""},
+      {id:2,type:"ショート",days:["月","水","金"],      time:"12:00",freq:"毎週",note:""},
+    ],
+    volumeTargets:{long:4,short:12},
+    meeting:{enabled:true,day:"水",time:"20:00",duration:1},
+    owners:{front:"猪谷",producer:"",director:""},
+    shooting:{enabled:true,hours:3,travelH:1,timesPerMonth:2,cameraman:"猪谷"},
+    planning:{countPerMonth:0,hPerPlan:0}, // migrated to tasks
+    deadline:""
+  },
+  {
+    id:3, type:"運用", name:"ピンク社長", status:"編集中",
+    tasks:[
+      {id:1,role:"サムネイル",  member:"猪谷", dailyMin:0.4, dailyStd:0.5, dailyMax:0.75, daysPerMonth:24, actual:null},
+      {id:2,role:"ロング編集",  member:"藤井", dailyMin:8,   dailyStd:10,  dailyMax:15,   daysPerMonth:4,  actual:null},
+    ],
+    scheduleMode:"fixed",
+    scheduleGroups:[
+      {id:1,type:"ロング",  days:["水"],               time:"18:00",freq:"毎週",note:""},
+      {id:2,type:"ショート",days:["日"],                time:"12:00",freq:"毎週",note:""},
+    ],
+    volumeTargets:{long:4,short:4},
+    meeting:{enabled:false,day:"",time:"",duration:0},
+    owners:{front:"藤井",producer:"",director:""},
+    shooting:{enabled:true,hours:4,travelH:2,timesPerMonth:1,cameraman:"藤井"},
+    planning:{countPerMonth:0,hPerPlan:0},
+    deadline:""
+  },
+  {
+    id:4, type:"運用", name:"白内障ラボ", status:"確認待ち",
+    tasks:[
+      {id:1,role:"企画",       member:"猪谷", dailyMin:0.25,dailyStd:0.35,dailyMax:0.5,  daysPerMonth:35, actual:null},
+      {id:2,role:"ロング編集", member:"熊野", dailyMin:6,   dailyStd:8,   dailyMax:12,   daysPerMonth:4,  actual:null},
+      {id:3,role:"週報・管理", member:"伊東", dailyMin:1.5, dailyStd:2,   dailyMax:3,    daysPerMonth:4,  actual:null},
+    ],
+    scheduleMode:"fixed",
+    scheduleGroups:[
+      {id:1,type:"ロング",  days:["月"],               time:"18:00",freq:"毎週",note:""},
+      {id:2,type:"ショート",days:["金"],                time:"12:00",freq:"毎週",note:"隔週"},
+    ],
+    volumeTargets:{long:4,short:2},
+    meeting:{enabled:true,day:"木",time:"18:00",duration:2},
+    owners:{front:"",producer:"",director:""},
+    shooting:{enabled:false,hours:0,travelH:0,timesPerMonth:0,cameraman:""},
+    planning:{countPerMonth:0,hPerPlan:0}, // migrated to tasks
+    deadline:""
+  },
+  {
+    id:5, type:"運用", name:"マーケティング侍", status:"未設定",
+    tasks:[
+      {id:1,role:"サムネイル", member:"松元", dailyMin:0.4, dailyStd:0.5, dailyMax:0.75, daysPerMonth:84, actual:null},
+    ],
+    scheduleMode:"volume",
+    scheduleGroups:[],
+    volumeTargets:{long:0,short:84},
+    meeting:{enabled:false,day:"",time:"",duration:0},
+    owners:{front:"",producer:"",director:""},
+    shooting:{enabled:false,hours:0,travelH:0,timesPerMonth:0,cameraman:""},
+    planning:{countPerMonth:0,hPerPlan:0},
+    deadline:""
+  },
+  {
+    id:6, type:"制作", name:"WAVY", status:"確認待ち",
+    tasks:[
+      {id:1,role:"編集", member:"藤井", dailyMin:8, dailyStd:12, dailyMax:18, daysPerMonth:1, actual:null},
+    ],
+    scheduleMode:"manual",
+    scheduleGroups:[],
+    volumeTargets:{long:0,short:0},
+    meeting:{enabled:false,day:"",time:"",duration:0},
+    owners:{front:"藤井",producer:"板垣",director:""},
+    shooting:{enabled:true,hours:5,travelH:1,timesPerMonth:1,cameraman:"藤井"},
+    planning:{countPerMonth:0,hPerPlan:0},
+    deadline:""
+  },
+  {
+    id:7, type:"制作", name:"おおかみクリニック", status:"企画中",
+    tasks:[
+      {id:1,role:"企画", member:"藤井", dailyMin:3,  dailyStd:5,  dailyMax:8,  daysPerMonth:2, actual:null},
+      {id:2,role:"編集", member:"藤井", dailyMin:6,  dailyStd:10, dailyMax:14, daysPerMonth:2, actual:null},
+    ],
+    scheduleMode:"manual",
+    scheduleGroups:[],
+    volumeTargets:{long:0,short:0},
+    meeting:{enabled:true,day:"月",time:"17:00",duration:1},
+    owners:{front:"",producer:"",director:""},
+    shooting:{enabled:false,hours:0,travelH:0,timesPerMonth:0,cameraman:""},
+    planning:{countPerMonth:0,hPerPlan:0}, // migrated to tasks
+    deadline:""
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  計算エンジン
+// ═══════════════════════════════════════════════════════════════════
+
+// タスクの月間工数（日あたり × 日数）
+function taskMonthH(t){
+  return {
+    min:  Math.round(t.dailyMin * t.daysPerMonth * 10)/10,
+    std:  Math.round(t.dailyStd * t.daysPerMonth * 10)/10,
+    max:  Math.round(t.dailyMax * t.daysPerMonth * 10)/10,
+    actual: t.actual
+  };
+}
+
+// 案件の追加工数（撮影・会議のみ ─ 企画はtasksで管理）
+function addH(proj){
+  const s=proj.shooting||{};
+  const m=proj.meeting||{};
+  const shoot = s.enabled ? (s.hours+s.travelH)*(s.timesPerMonth||0) : 0;
+  const mtg   = m.enabled ? (m.duration||0)*4.3 : 0;
+  const cameraman = (s.cameraman||"").trim();
+  const shootMembers = cameraman && cameraman!=="外注" ? [cameraman] : [];
+  return {
+    shoot:Math.round(shoot*10)/10,
+    mtg:Math.round(mtg*10)/10,
+    total:Math.round((shoot+mtg)*10)/10,
+    shootH:Math.round(shoot*10)/10,
+    shootMembers
+  };
+}
+
+// メンバーの月間集計
+function memberMonthH(memberName){
+  let min=0,std=0,max=0;
+  const breakdown=[];
+  PROJECTS.forEach(proj=>{
+    // ─ タスク工数 ─
+    (proj.tasks||[]).forEach(t=>{
+      if(t.member!==memberName) return;
+      const h=taskMonthH(t);
+      min+=h.min; std+=h.std; max+=h.max;
+      breakdown.push({proj:proj.name,role:t.role,dailyStd:t.dailyStd,days:t.daysPerMonth,min:h.min,std:h.std,max:h.max,actual:h.actual,taskRef:t});
+    });
+    const a=addH(proj);
+    // ─ 撮影工数：cameraman のみに反映 ─
+    if(a.shootH>0 && a.shootMembers.includes(memberName)){
+      const s=proj.shooting||{};
+      const mn=Math.round(a.shootH*0.85*10)/10;
+      const mx=Math.round(a.shootH*1.2*10)/10;
+      min+=mn; std+=a.shootH; max+=mx;
+      breakdown.push({
+        proj:proj.name, role:"撮影担当",
+        dailyStd:null, days:null,
+        min:mn, std:a.shootH, max:mx,
+        actual:null, taskRef:null,
+        detail:`撮影${s.hours||0}h＋移動${s.travelH||0}h × 月${s.timesPerMonth||0}回`
+      });
+    }
+    // ─ 会議工数：フロント担当またはリスト先頭へ ─
+    const frontMember=(proj.tasks||[]).find(t=>t.role==="フロント"||t.role==="ディレクター")?.member
+                    || (proj.tasks||[])[0]?.member;
+    if(frontMember===memberName && a.mtg>0){
+      const mn=Math.round(a.mtg*0.8*10)/10;
+      const mx=Math.round(a.mtg*1.3*10)/10;
+      min+=mn; std+=a.mtg; max+=mx;
+      breakdown.push({proj:proj.name,role:"定例会議",dailyStd:null,days:null,min:mn,std:a.mtg,max:mx,actual:null,taskRef:null,detail:`${proj.meeting?.day||""}曜 ${proj.meeting?.duration||0}h × 月4.3回`});
+    }
+  });
+  return {min:Math.round(min*10)/10,std:Math.round(std*10)/10,max:Math.round(max*10)/10,breakdown};
+}
+
+function capStatus(std,cap){
+  const p=std/cap*100;
+  if(p>=100) return{label:"超過",color:"#ff3b30",bg:"var(--red-bg)"};
+  if(p>=85)  return{label:"注意",color:"#ff9500",bg:"var(--orange-bg)"};
+  if(p>=60)  return{label:"適正",color:"#34c759",bg:"var(--green-bg)"};
+  return{label:"余裕",color:"#5856d6",bg:"var(--purple-bg)"};
+}
+
+// スケジュールグループを曜日ごとのイベントに展開（固定曜日 + 手動）
+function expandScheduleEvents(year, month){
+  const events=[];
+  const DAY_IDX={月:0,火:1,水:2,木:3,金:4,土:5,日:6};
+  PROJECTS.forEach(proj=>{
+    const mode=proj.scheduleMode||"fixed";
+    if(mode==="fixed"){
+      (proj.scheduleGroups||[]).forEach(sg=>{
+        sg.days.forEach(day=>{
+          events.push({
+            projName:proj.name, projId:proj.id,
+            type:sg.type, day, dayIdx:DAY_IDX[day]??-1,
+            time:sg.time, freq:sg.freq, note:sg.note||"",
+            color:sg.type==="ロング"?"#007aff":sg.type==="ショート"?"#5856d6":"#ff9500",
+            isManual:false
+          });
+        });
+      });
+    }
+    // 手動登録：当該月のものだけ展開
+    if(mode==="manual"&&year!=null){
+      const ym=`${year}-${String(month+1).padStart(2,'0')}`;
+      MANUAL_EVENTS.filter(e=>e.projId===proj.id&&e.date.startsWith(ym)).forEach(e=>{
+        const d=new Date(e.date);
+        events.push({
+          projName:proj.name, projId:proj.id, manualId:e.id,
+          type:e.type, day:null, dayIdx:null,
+          date:e.date, dateNum:d.getDate(),
+          time:e.time, freq:"手動", note:e.note||"",
+          color:e.type==="ロング"?"#007aff":e.type==="ショート"?"#5856d6":"#ff9500",
+          isManual:true, actual:e.actual
+        });
+      });
+    }
+    // 定例会議
+    if(proj.meeting?.enabled&&proj.meeting.day){
+      events.push({
+        projName:proj.name, projId:proj.id,
+        type:"MTG", day:proj.meeting.day,
+        dayIdx:DAY_IDX[proj.meeting.day]??-1,
+        time:proj.meeting.time, freq:"毎週", note:"", color:"#ff2d55",
+        isManual:false
+      });
+    }
+  });
+  return events;
+}
+
+// 月間投稿本数を集計（モード別）
+function monthPostSummary(proj, year, month){
+  const mode=proj.scheduleMode||"fixed";
+  let longPlan=0, shortPlan=0, longActual=0, shortActual=0;
+  if(mode==="fixed"){
+    (proj.scheduleGroups||[]).forEach(sg=>{
+      const cnt=monthlyPostCount(sg,year,month);
+      if(typeof cnt==="number"){
+        if(sg.type==="ロング") longPlan+=cnt;
+        else if(sg.type==="ショート") shortPlan+=cnt;
+      }
+    });
+  } else if(mode==="volume"){
+    longPlan=(proj.volumeTargets||{}).long||0;
+    shortPlan=(proj.volumeTargets||{}).short||0;
+  } else if(mode==="manual"){
+    const ym=`${year}-${String(month+1).padStart(2,'0')}`;
+    MANUAL_EVENTS.filter(e=>e.projId===proj.id&&e.date.startsWith(ym)).forEach(e=>{
+      if(e.type==="ロング"){longPlan++;if(e.actual)longActual++;}
+      else if(e.type==="ショート"){shortPlan++;if(e.actual)shortActual++;}
+    });
+  }
+  return{longPlan,shortPlan,longActual,shortActual};
+}
+
+// 月の投稿回数を計算（スケジュールグループから）
+function monthlyPostCount(sg,year,month){
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const DAY_IDX={月:1,火:2,水:3,木:4,金:5,土:6,日:0};
+  if(sg.freq==="不定期") return "不定期";
+  if(sg.freq==="月1")    return sg.days.length;
+  if(sg.freq==="月2")    return sg.days.length*2;
+  // 毎週系：月内に各曜日が何回あるか数える
+  let count=0;
+  sg.days.forEach(d=>{
+    const dow=DAY_IDX[d];
+    for(let date=1;date<=daysInMonth;date++){
+      if(new Date(year,month,date).getDay()===dow) count++;
+    }
+  });
+  if(sg.freq==="隔週") count=Math.ceil(count/2);
+  return count;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ナビゲーション
+// ═══════════════════════════════════════════════════════════════════
+let currentNav="dash";
+function goNav(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  document.querySelectorAll(".nb").forEach(b=>b.classList.remove("on"));
+  document.getElementById("sc-"+id).classList.add("on");
+  document.getElementById("nb-"+id).classList.add("on");
+  currentNav=id;
+  const titles={dash:"リソース管理",proj:"案件一覧",member:"メンバー",cal:"カレンダー",anal:"分析",conf:"設定"};
+  document.getElementById("hdr-title").textContent=titles[id]||"リソース管理";
+  if(id==="dash")   renderDash();
+  if(id==="proj")   renderProj();
+  if(id==="member") renderMember();
+  if(id==="cal")    renderCal();
+  if(id==="anal")   renderAnal();
+  if(id==="conf")   renderConf();
+  renderHeader();
+}
+function onFab(){openProjSheet(null);}
+function renderHeader(){
+  document.getElementById("hdr-sub").textContent=`${PROJECTS.length}案件 · ${MEMBERS.length}名`;
+  document.getElementById("hdr-badges").innerHTML=
+    `<span class="bdg" style="background:var(--blue-bg);color:var(--blue)">運用 ${PROJECTS.filter(p=>p.type==="運用").length}</span>`+
+    `<span class="bdg" style="background:var(--green-bg);color:var(--green)">制作 ${PROJECTS.filter(p=>p.type==="制作").length}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ダッシュボード
+// ═══════════════════════════════════════════════════════════════════
+const STATUS_CFG={
+  "企画中":  {dot:"#007aff",bg:"#e8f2ff",fg:"#007aff"},
+  "撮影待ち":{dot:"#ff9500",bg:"var(--orange-bg)",fg:"#ff9500"},
+  "編集中":  {dot:"#34c759",bg:"var(--green-bg)",fg:"#34c759"},
+  "確認待ち":{dot:"#5856d6",bg:"var(--purple-bg)",fg:"#5856d6"},
+  "入稿済":  {dot:"#1baf7a",bg:"#e1f5ee",fg:"#1baf7a"},
+  "未設定":  {dot:"#8e8e93",bg:"var(--bg2)",fg:"#8e8e93"},
+};
+function renderDash(){
+  const mData=MEMBERS.map(m=>{const h=memberMonthH(m.name);return{m,h};});
+  const totalStd=mData.reduce((s,{h})=>s+h.std,0);
+  const over=mData.filter(({m,h})=>h.std>=m.maxCap).length;
+  const warn=mData.filter(({m,h})=>h.std>=m.maxCap*0.85&&h.std<m.maxCap).length;
+  document.getElementById("d-kpi").innerHTML=[
+    {l:"総稼働(月)",v:Math.round(totalStd)+"h",c:"#007aff"},
+    {l:"キャパ超過",v:over+"名",c:over>0?"#ff3b30":"#34c759"},
+    {l:"注意ライン",v:warn+"名",c:warn>0?"#ff9500":"#34c759"},
+  ].map(k=>`<div class="kpi"><div class="kpi-l">${k.l}</div><div class="kpi-v" style="color:${k.c}">${k.v}</div></div>`).join("");
+
+  const sorted=mData.sort((a,b)=>b.h.std/b.m.maxCap-a.h.std/a.m.maxCap);
+  document.getElementById("d-cap").innerHTML=sorted.map(({m,h})=>{
+    const pct=Math.min(100,Math.round(h.std/m.maxCap*100));
+    const pMin=Math.min(100,Math.round(h.min/m.maxCap*100));
+    const pMax=Math.min(100,Math.round(h.max/m.maxCap*100));
+    const st=capStatus(h.std,m.maxCap);
+    const rem=Math.max(0,Math.round((m.maxCap-h.std)*10)/10);
+    const wkH=Math.round(h.std/4.3*10)/10;
+    return`<div class="card" style="padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="av" style="background:${m.color}22;color:${m.color};width:32px;height:32px;font-size:12px">${esc(m.name[0])}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span style="font-size:14px;font-weight:600">${esc(m.name)}</span>
+            <span class="tag" style="background:${st.bg};color:${st.color};font-size:10px">${st.label}</span>
+          </div>
+          <div style="font-size:11px;color:var(--t3)">月${h.std}h / ${m.maxCap}h　週${wkH}h　残<strong style="color:${rem<20?"#ff3b30":rem<40?"#ff9500":"#34c759"}">${rem}h</strong></div>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:${st.color};flex-shrink:0">${pct}%</div>
+      </div>
+      <div class="cap-track">
+        <div class="cap-range" style="left:${pMin}%;width:${Math.min(pMax,100)-pMin}%;background:${m.color}"></div>
+        <div class="cap-fill" style="width:${pct}%;background:${st.color}"></div>
+      </div>
+      <div class="cap-lbl"><span>最低${h.min}h</span><span>標準${h.std}h</span><span>最大${h.max}h</span></div>
+    </div>`;
+  }).join("");
+
+  const alerts=mData.filter(({m,h})=>h.std>=m.maxCap*0.85);
+  document.getElementById("d-alert").innerHTML=alerts.length
+    ?`<div class="alert-box"><div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:5px">⚠ キャパ注意 ${alerts.length}名</div>${alerts.map(({m,h})=>`<div style="font-size:12px;color:var(--red);margin-bottom:3px">・${esc(m.name)} ${h.std}h / ${m.maxCap}h（${Math.round(h.std/m.maxCap*100)}%）</div>`).join("")}</div>`
+    :`<div class="card" style="text-align:center;color:var(--t3);font-size:13px">✓ 全員キャパ内で稼働中</div>`;
+
+  // 分布
+  const cats={サムネイル:0,"編集・ロング":0,企画:0,撮影:0,会議:0,管理:0};
+  PROJECTS.forEach(p=>{
+    (p.tasks||[]).forEach(t=>{
+      const h=taskMonthH(t).std;
+      if(t.role.includes("サムネ")) cats["サムネイル"]+=h;
+      else if(t.role.includes("企画")||t.role.includes("台本")) cats["企画"]+=h;
+      else if(t.role.includes("編集")||t.role.includes("ロング")||t.role.includes("ショート")||t.role.includes("切り抜き")) cats["編集・ロング"]+=h;
+      else if(t.role.includes("週報")||t.role.includes("管理")||t.role.includes("投稿")) cats["管理"]+=h;
+      else cats["その他"]=(cats["その他"]||0)+h;
+    });
+    const a=addH(p);
+    cats["撮影"]+=a.shoot; cats["会議"]+=a.mtg;
+  });
+  const catC={サムネイル:"#5856d6","編集・ロング":"#007aff",企画:"#34c759",撮影:"#ff9500",会議:"#ff2d55",管理:"#5ac8fa",その他:"#8e8e93"};
+  const tot=Math.max(Object.values(cats).reduce((s,v)=>s+v,0),1);
+  document.getElementById("d-dist").innerHTML=
+    `<div class="ratio-bar">${Object.entries(cats).map(([k,v])=>`<div class="ratio-seg" style="width:${Math.round(v/tot*100)}%;background:${catC[k]}"></div>`).join("")}</div>`+
+    `<div class="legend-row">${Object.entries(cats).map(([k,v])=>`<div class="legend-item"><div class="legend-sq" style="background:${catC[k]}"></div>${esc(k)} ${Math.round(v)}h</div>`).join("")}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  案件一覧
+// ═══════════════════════════════════════════════════════════════════
+let fType="全て",fStatus="全て";
+function renderProj(){
+  document.getElementById("proj-tabs").innerHTML=
+    ["全て","運用","制作"].map(t=>`<button class="tab-btn${fType===t?" on":""}" onclick="setFT('${t}')">${t}</button>`).join("")+
+    `<div style="width:.5px;background:var(--sep);margin:4px 0;flex-shrink:0"></div>`+
+    ["全て","企画中","撮影待ち","編集中","確認待ち","入稿済","未設定"].map(s=>`<button class="tab-btn${fStatus===s?" on":""}" onclick="setFS('${esc(s)}')">${esc(s)}</button>`).join("");
+  const q=(document.getElementById("search-inp")||{}).value||"";
+  const list=PROJECTS.filter(p=>{
+    if(fType!=="全て"&&p.type!==fType)return false;
+    if(fStatus!=="全て"&&p.status!==fStatus)return false;
+    if(q&&!p.name.includes(q))return false;
+    return true;
+  });
+  document.getElementById("proj-count").textContent=`${list.length}件`;
+  const now=new Date();
+  document.getElementById("proj-list").innerHTML=list.map(proj=>{
+    const cfg=STATUS_CFG[proj.status]||STATUS_CFG["未設定"];
+    const tH=proj.tasks.reduce((s,t)=>{const h=taskMonthH(t);return{min:s.min+h.min,std:s.std+h.std,max:s.max+h.max};},{min:0,std:0,max:0});
+    const a=addH(proj);
+    const std=Math.round((tH.std+a.total)*10)/10;
+    const mn=Math.round((tH.min+a.total*0.8)*10)/10;
+    const mx=Math.round((tH.max+a.total*1.3)*10)/10;
+    // 投稿スケジュールサマリー（モード対応）
+    const mode=proj.scheduleMode||"fixed";
+    const sum=monthPostSummary(proj,now.getFullYear(),now.getMonth());
+    const modeLabel=mode==="fixed"?"固定曜日":mode==="volume"?"月間本数":"手動登録";
+    const modeColor=mode==="fixed"?"var(--blue)":mode==="volume"?"var(--green)":"var(--orange)";
+    const modeBg=mode==="fixed"?"var(--blue-bg)":mode==="volume"?"var(--green-bg)":"var(--orange-bg)";
+    let sgSummary=`<span class="pill" style="background:${modeBg};color:${modeColor}">${modeLabel}</span>`;
+    if(mode==="fixed"){
+      sgSummary+=" "+(proj.scheduleGroups||[]).map(sg=>{
+        const cnt=monthlyPostCount(sg,now.getFullYear(),now.getMonth());
+        const tc=sg.type==="ロング"?"var(--blue)":sg.type==="ショート"?"var(--purple)":"var(--orange)";
+        const tb=sg.type==="ロング"?"var(--blue-bg)":sg.type==="ショート"?"var(--purple-bg)":"var(--orange-bg)";
+        return`<span class="pill" style="background:${tb};color:${tc};font-weight:600">${esc(sg.type)} ${sg.days.join("・")}曜 ${esc(sg.time)} <span style="opacity:.65;font-weight:400">月${cnt}回</span></span>`;
+      }).join(" ");
+    } else if(mode==="volume"){
+      if(sum.longPlan>0) sgSummary+=` <span class="pill" style="background:var(--blue-bg);color:var(--blue);font-weight:600">ロング ${sum.longPlan}本/月</span>`;
+      if(sum.shortPlan>0) sgSummary+=` <span class="pill" style="background:var(--purple-bg);color:var(--purple);font-weight:600">ショート ${sum.shortPlan}本/月</span>`;
+    } else {
+      sgSummary+=` <span class="pill" style="background:var(--orange-bg);color:var(--orange)">ロング${sum.longPlan}本 ショート${sum.shortPlan}本</span>`;
+    }
+    return`<div class="card" style="cursor:pointer;margin-bottom:8px;padding:13px 14px" onclick="openProjSheet(${proj.id})">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+        <span class="dot" style="background:${cfg.dot};margin-top:5px;flex-shrink:0"></span>
+        <div style="flex:1;min-width:0;padding-left:4px">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(proj.name)}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px">
+            <span class="tag" style="background:${proj.type==="運用"?"var(--blue-bg);color:var(--blue)":"var(--green-bg);color:var(--green)"}">${esc(proj.type)}</span>
+            <span class="tag" style="background:${cfg.bg};color:${cfg.fg}">${esc(proj.status)}</span>
+            ${proj.meeting?.enabled?`<span class="tag" style="background:var(--pink-bg);color:var(--pink)">MTG ${esc(proj.meeting.day)}曜</span>`:""}
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${(()=>{
+              const o=proj.owners||{};
+              return [["F",o.front],["P",o.producer],["D",o.director]].filter(([,v])=>v&&v!=="外注"&&v!=="").map(([role,name])=>{
+                const c=mc(name);
+                return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;background:${c}18;color:${c};font-weight:500"><span style="font-size:9px;opacity:.7">${role}</span>${esc(name)}</span>`;
+              }).join("");
+            })()}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:22px;font-weight:700;color:${std>50?"#ff3b30":std>30?"#ff9500":"#007aff"}">${std}</div>
+          <div style="font-size:10px;color:var(--t3)">h/月</div>
+        </div>
+      </div>
+      ${sgSummary?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">${sgSummary}</div>`:""}
+      <div style="background:var(--bg2);border-radius:8px;padding:7px 10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3)">
+          <span>最低 ${mn}h</span><span>標準 <strong style="color:var(--t1)">${std}h</strong></span><span>最大 ${mx}h</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("")||`<div style="text-align:center;padding:3rem;color:var(--t3);font-size:13px">案件がありません</div>`;
+}
+function setFT(v){fType=v;renderProj();}
+function setFS(v){fStatus=v;renderProj();}
+
+// ═══════════════════════════════════════════════════════════════════
+//  メンバー
+// ═══════════════════════════════════════════════════════════════════
+const openMbr={};
+function renderMember(){
+  document.getElementById("m-list").innerHTML=MEMBERS.map(m=>{
+    const h=memberMonthH(m.name);
+    const pct=Math.min(100,Math.round(h.std/m.maxCap*100));
+    const pMin=Math.min(100,Math.round(h.min/m.maxCap*100));
+    const pMax=Math.min(100,Math.round(h.max/m.maxCap*100));
+    const st=capStatus(h.std,m.maxCap);
+    const rem=Math.max(0,Math.round((m.maxCap-h.std)*10)/10);
+    const wkH=Math.round(h.std/4.3*10)/10;
+    const isOpen=openMbr[m.id];
+    return`<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;cursor:pointer" onclick="toggleMbr(${m.id})">
+        <div class="av" style="background:${m.color}22;color:${m.color}">${esc(m.name[0])}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span style="font-size:15px;font-weight:600">${esc(m.name)}</span>
+            <span class="tag" style="background:${st.bg};color:${st.color};font-size:10px">${st.label}</span>
+          </div>
+          <div style="font-size:11px;color:var(--t3)">月${h.std}h　週${wkH}h　残<strong style="color:${rem<20?"#ff3b30":rem<40?"#ff9500":"#34c759"}">${rem}h</strong></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-right:4px">
+          <div style="font-size:20px;font-weight:700;color:${st.color}">${pct}%</div>
+        </div>
+        <span class="chevron${isOpen?" open":""}">›</span>
+      </div>
+      <div style="margin-top:10px">
+        <div class="cap-track">
+          <div class="cap-range" style="left:${pMin}%;width:${Math.min(pMax,100)-pMin}%;background:${m.color}"></div>
+          <div class="cap-fill" style="width:${pct}%;background:${st.color}"></div>
+        </div>
+        <div class="cap-lbl"><span>最低${h.min}h</span><span>標準${h.std}h</span><span>最大${h.max}h</span></div>
+      </div>
+      ${isOpen?`
+      <div style="margin-top:12px;border-top:.5px solid var(--sep);padding-top:12px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+          <div class="kpi" style="padding:8px"><div class="kpi-l">月間</div><div class="kpi-v" style="font-size:16px;color:${m.color}">${h.std}h</div></div>
+          <div class="kpi" style="padding:8px"><div class="kpi-l">週平均</div><div class="kpi-v" style="font-size:16px;color:var(--blue)">${wkH}h</div></div>
+          <div class="kpi" style="padding:8px"><div class="kpi-l">残りキャパ</div><div class="kpi-v" style="font-size:16px;color:${rem<20?"#ff3b30":rem<40?"#ff9500":"#34c759"}">${rem}h</div></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px">タスク別内訳（日あたり × 日数 = 月間）</div>
+        ${h.breakdown.map(b=>{
+          const asSt=b.actual!==null?actualStatus(b.actual,b.min,b.max):null;
+          const dayStr=b.dailyStd!==null?`${b.dailyStd}h/日 × ${b.days}日`:"";
+          return`<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:.5px solid var(--sep)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:500">${esc(b.proj)}</div>
+              <div style="font-size:11px;color:var(--t3)">${esc(b.role)}${dayStr?` (${dayStr})`:b.detail?` (${esc(b.detail)})`:""}　最低${b.min} / 標準<strong style="color:${m.color}">${b.std}</strong> / 最大${b.max}h</div>
+            </div>
+            ${asSt?`<span class="tag" style="background:${asSt.color}22;color:${asSt.color};font-size:10px;flex-shrink:0">実績${b.actual}h ${asSt.label}</span>`:``}
+          </div>`;
+        }).join("")}
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="openActSheet(${m.id})" style="flex:1;padding:10px;border-radius:10px;border:.5px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-size:13px;font-weight:600;cursor:pointer">実績入力</button>
+          <button onclick="openMbrSheet(${m.id})" style="flex:1;padding:10px;border-radius:10px;border:.5px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;cursor:pointer">設定変更</button>
+        </div>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+function toggleMbr(id){openMbr[id]=!openMbr[id];renderMember();}
+function actualStatus(actual,min,max){
+  if(actual>max) return{label:"超過",color:"#ff3b30"};
+  if(actual<min) return{label:"下回り",color:"#ff9500"};
+  return{label:"適正",color:"#34c759"};
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  カレンダー
+// ═══════════════════════════════════════════════════════════════════
+let calY=new Date().getFullYear(),calM=new Date().getMonth();
+function calPrev(){calM--;if(calM<0){calM=11;calY--;}renderCal();}
+function calNext(){calM++;if(calM>11){calM=0;calY++;}renderCal();}
+function renderCal(){
+  const months=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  document.getElementById("cal-title").textContent=`${calY}年 ${months[calM]}`;
+  const events=expandScheduleEvents(calY,calM);
+  const DAY_JS={日:0,月:1,火:2,水:3,木:4,金:5,土:6};
+  document.getElementById("cal-hdr").innerHTML=CAL_DAYS.map(d=>`<div class="cal-dh" style="color:${d==="日"?"#ff3b30":d==="土"?"#007aff":"var(--t3)"}">${d}</div>`).join("");
+  const first=new Date(calY,calM,1).getDay();
+  const days=new Date(calY,calM+1,0).getDate();
+  const today=new Date();
+  let html="";
+  for(let i=0;i<first;i++) html+=`<div class="cal-day" style="background:transparent;min-height:56px"></div>`;
+  for(let d=1;d<=days;d++){
+    const date=new Date(calY,calM,d);
+    const dow=date.getDay();
+    const isToday=date.toDateString()===today.toDateString();
+    // 固定曜日イベント
+    const fixedEvts=events.filter(e=>{
+      if(e.isManual) return false;
+      if(e.type==="MTG"){const ed=DAY_JS[e.day]??-1;return ed===dow;}
+      const ed=DAY_JS[e.day]??-1;
+      if(ed<0||ed!==dow) return false;
+      if(e.freq==="月1") return d<=7;
+      if(e.freq==="月2") return d<=14;
+      if(e.freq==="隔週") return Math.floor((d-1)/7)%2===0;
+      return true;
+    });
+    // 手動イベント
+    const manualEvts=events.filter(e=>e.isManual&&e.dateNum===d);
+    const dayEvts=[...fixedEvts,...manualEvts];
+    html+=`<div class="cal-day${isToday?" today":""}">
+      <div class="cal-num" style="${dow===0?"color:#ff3b30":dow===6?"color:#007aff":""}">${d}</div>
+      ${dayEvts.slice(0,3).map(e=>`<div class="cal-ev" style="background:${e.color}22;color:${e.color};${e.actual?"text-decoration:line-through opacity:.6":""}">${esc(e.type)}</div>`).join("")}
+      ${dayEvts.length>3?`<div style="font-size:8px;color:var(--t3)">+${dayEvts.length-3}</div>`:""}
+    </div>`;
+  }
+  document.getElementById("cal-body").innerHTML=html;
+
+  // ── 案件別スケジュール一覧 ──
+  let schedHTML="";
+  PROJECTS.forEach(proj=>{
+    const mode=proj.scheduleMode||"fixed";
+    const sum=monthPostSummary(proj,calY,calM);
+    const hasContent=(proj.scheduleGroups||[]).length||proj.meeting?.enabled
+      ||(mode==="volume"&&(sum.longPlan+sum.shortPlan>0))
+      ||(mode==="manual"&&MANUAL_EVENTS.some(e=>e.projId===proj.id&&e.date.startsWith(`${calY}-${String(calM+1).padStart(2,'0')}`)));
+    if(!hasContent) return;
+
+    const modeLabel=mode==="fixed"?"固定曜日":mode==="volume"?"月間本数管理":"手動登録";
+    const modeColor=mode==="fixed"?"var(--blue)":mode==="volume"?"var(--green)":"var(--orange)";
+    const modeBg=mode==="fixed"?"var(--blue-bg)":mode==="volume"?"var(--green-bg)":"var(--orange-bg)";
+
+    schedHTML+=`<div class="card" style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:700">${esc(proj.name)}</span>
+        <span class="tag" style="background:${modeBg};color:${modeColor}">${modeLabel}</span>
+      </div>`;
+
+    // ─ 投稿本数サマリー（全モード共通） ─
+    if(sum.longPlan>0||sum.shortPlan>0){
+      schedHTML+=`<div style="display:flex;gap:8px;margin-bottom:10px">`;
+      if(sum.longPlan>0){
+        const ok=mode==="manual"?sum.longActual:null;
+        schedHTML+=`<div style="flex:1;background:var(--blue-bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--blue);margin-bottom:2px">ロング</div>
+          <div style="font-size:20px;font-weight:800;color:var(--blue)">${mode==="manual"?sum.longActual:sum.longPlan}<span style="font-size:11px;font-weight:400">/${sum.longPlan}本</span></div>
+        </div>`;
+      }
+      if(sum.shortPlan>0){
+        schedHTML+=`<div style="flex:1;background:var(--purple-bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--purple);margin-bottom:2px">ショート</div>
+          <div style="font-size:20px;font-weight:800;color:var(--purple)">${mode==="manual"?sum.shortActual:sum.shortPlan}<span style="font-size:11px;font-weight:400">/${sum.shortPlan}本</span></div>
+        </div>`;
+      }
+      schedHTML+=`</div>`;
+    }
+
+    // ─ 固定曜日モード: 曜日・時間一覧 ─
+    if(mode==="fixed"){
+      (proj.scheduleGroups||[]).forEach(sg=>{
+        const tc=sg.type==="ロング"?"var(--blue)":sg.type==="ショート"?"var(--purple)":"var(--orange)";
+        const tb=sg.type==="ロング"?"var(--blue-bg)":sg.type==="ショート"?"var(--purple-bg)":"var(--orange-bg)";
+        const cnt=monthlyPostCount(sg,calY,calM);
+        schedHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:.5px solid var(--sep)">
+          <span class="tag" style="background:${tb};color:${tc};min-width:52px;text-align:center">${esc(sg.type)}</span>
+          <div style="flex:1">
+            <span style="font-size:14px;font-weight:700">${esc(sg.freq)} ${sg.days.join("・")}曜　${esc(sg.time)}</span>
+            <span style="font-size:11px;color:var(--t3);margin-left:8px">月${cnt}回</span>
+          </div>
+        </div>`;
+      });
+    }
+
+    // ─ 手動登録モード: 日付一覧 + 追加ボタン ─
+    if(mode==="manual"){
+      const ym=`${calY}-${String(calM+1).padStart(2,'0')}`;
+      const mEvts=MANUAL_EVENTS.filter(e=>e.projId===proj.id&&e.date.startsWith(ym)).sort((a,b)=>a.date.localeCompare(b.date));
+      mEvts.forEach(e=>{
+        const tc=e.type==="ロング"?"var(--blue)":e.type==="ショート"?"var(--purple)":"var(--orange)";
+        const tb=e.type==="ロング"?"var(--blue-bg)":e.type==="ショート"?"var(--purple-bg)":"var(--orange-bg)";
+        const dd=parseInt(e.date.split("-")[2]);
+        const dow=new Date(e.date).getDay();
+        const dowName=CAL_DAYS[dow];
+        schedHTML+=`<div class="manual-ev" onclick="editManualEvent(${e.id})">
+          <span class="tag" style="background:${tb};color:${tc};min-width:52px;text-align:center">${esc(e.type)}</span>
+          <div style="flex:1">
+            <span style="font-size:14px;font-weight:700">${calM+1}月${dd}日（${dowName}）　${esc(e.time)}</span>
+            ${e.note?`<span style="font-size:11px;color:var(--t3);margin-left:6px">${esc(e.note)}</span>`:""}
+          </div>
+          <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:${e.actual?"var(--green-bg)":"var(--bg2)"};color:${e.actual?"var(--green)":"var(--t3)"}">${e.actual?"投稿済":"予定"}</span>
+        </div>`;
+      });
+      schedHTML+=`<button class="add-ev-btn" onclick="addManualEvent(${proj.id})">＋ 投稿予定を追加</button>`;
+    }
+
+    // ─ 定例会議 ─
+    if(proj.meeting?.enabled&&proj.meeting.day){
+      schedHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:.5px solid var(--sep)">
+        <span class="tag" style="background:var(--pink-bg);color:var(--pink);min-width:52px;text-align:center">MTG</span>
+        <span style="font-size:13px;font-weight:600">毎週 ${esc(proj.meeting.day)}曜　${esc(proj.meeting.time)}（${proj.meeting.duration}h）</span>
+      </div>`;
+    }
+    schedHTML+=`</div>`;
+  });
+
+  document.getElementById("cal-sched").innerHTML=schedHTML||`<div class="card" style="text-align:center;color:var(--t3);font-size:13px;padding:14px">スケジュールがありません</div>`;
+}
+
+// 手動イベント追加・編集
+function addManualEvent(projId){
+  const proj=PROJECTS.find(p=>p.id===projId);
+  if(!proj) return;
+  const today=new Date();
+  const dateStr=`${calY}-${String(calM+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const newEv={id:Date.now(),projId,type:"ロング",date:dateStr,time:"19:00",note:"",actual:false};
+  MANUAL_EVENTS.push(newEv);
+  openManualSheet(newEv.id);
+}
+function editManualEvent(id){openManualSheet(id);}
+
+let editManualId=null;
+function openManualSheet(id){
+  editManualId=id;
+  const ev=MANUAL_EVENTS.find(e=>e.id===id);
+  if(!ev) return;
+  const proj=PROJECTS.find(p=>p.id===ev.projId);
+  document.getElementById("manual-sheet-title").textContent=`${proj?.name||""} 投稿登録`;
+  document.getElementById("manual-body").innerHTML=`
+    <div class="fc">
+      <div class="fc-title">投稿予定登録</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="flbl">投稿種別</label>
+          <select class="finp" onchange="updateManualEv('type',this.value)">
+            ${["ロング","ショート","その他"].map(t=>`<option${ev.type===t?" selected":""}>${t}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label class="flbl">ステータス</label>
+          <select class="finp" onchange="updateManualEv('actual',this.value==='投稿済')">
+            <option${!ev.actual?" selected":""}>予定</option>
+            <option${ev.actual?" selected":""}>投稿済</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="flbl">投稿日</label>
+          <input class="finp" type="date" value="${ev.date}" oninput="updateManualEv('date',this.value)">
+        </div>
+        <div>
+          <label class="flbl">投稿時間</label>
+          <input class="finp" type="time" value="${ev.time}" oninput="updateManualEv('time',this.value)" style="font-size:16px;font-weight:700;text-align:center">
+        </div>
+      </div>
+      <label class="flbl">メモ</label>
+      <input class="finp" value="${esc(ev.note)}" placeholder="例：PR案件 など" oninput="updateManualEv('note',this.value)">
+    </div>
+    <button onclick="deleteManualEv()" style="width:100%;padding:14px;border-radius:14px;border:none;background:var(--red-bg);color:var(--red);font-size:14px;font-weight:600;cursor:pointer">この投稿予定を削除</button>
+  `;
+  openSheet("manual-sheet");
+}
+function updateManualEv(key,val){
+  const ev=MANUAL_EVENTS.find(e=>e.id===editManualId);
+  if(ev) ev[key]=val;
+}
+function saveManualSheet(){closeSheet("manual-sheet");toast("保存しました ✓");renderCal();}
+function deleteManualEv(){
+  if(!confirm("削除しますか？"))return;
+  MANUAL_EVENTS=MANUAL_EVENTS.filter(e=>e.id!==editManualId);
+  closeSheet("manual-sheet");toast("削除しました");renderCal();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  分析
+// ═══════════════════════════════════════════════════════════════════
+let analTab=0;
+function renderAnal(){
+  document.getElementById("anal-tabs").innerHTML=["メンバー別","案件別","タスク別","実績比較"].map((t,i)=>`<button class="tab-btn${analTab===i?" on":""}" onclick="setAnalTab(${i})">${t}</button>`).join("");
+  const el=document.getElementById("anal-body");
+  if(analTab===0){
+    el.innerHTML=MEMBERS.map(m=>{
+      const h=memberMonthH(m.name);
+      const pct=Math.min(100,Math.round(h.std/m.maxCap*100));
+      const st=capStatus(h.std,m.maxCap);
+      return`<div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="av" style="background:${m.color}22;color:${m.color};width:32px;height:32px;font-size:12px">${esc(m.name[0])}</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600">${esc(m.name)}</div><div style="font-size:11px;color:var(--t3)">稼働率 ${pct}% · 月${h.std}h / ${m.maxCap}h</div></div>
+          <span class="tag" style="background:${st.bg};color:${st.color}">${st.label}</span>
+        </div>
+        <div class="wl-bar" style="height:8px"><div class="wl-fill" style="width:${pct}%;background:${st.color}"></div></div>
+        <div class="cap-lbl" style="margin-top:3px"><span>最低${h.min}h</span><span>残${Math.max(0,m.maxCap-h.std)}h</span><span>最大${h.max}h</span></div>
+      </div>`;
+    }).join("");
+  } else if(analTab===1){
+    const now=new Date();
+    el.innerHTML=PROJECTS.map(p=>{
+      const tH=p.tasks.reduce((s,t)=>{const h=taskMonthH(t);return{min:s.min+h.min,std:s.std+h.std,max:s.max+h.max};},{min:0,std:0,max:0});
+      const a=addH(p);
+      const std=Math.round((tH.std+a.total)*10)/10;
+      const mn=Math.round((tH.min+a.total*0.8)*10)/10;
+      const mx=Math.round((tH.max+a.total*1.3)*10)/10;
+      const postTotal=(p.scheduleGroups||[]).reduce((s,sg)=>{
+        const cnt=monthlyPostCount(sg,now.getFullYear(),now.getMonth());
+        return s+(typeof cnt==="number"?cnt:0);
+      },0);
+      return`<div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:14px;font-weight:600">${esc(p.name)}</span>
+          <span style="font-size:18px;font-weight:700;color:var(--blue)">${std}h/月</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;text-align:center">
+          <div style="background:var(--green-bg);border-radius:8px;padding:6px"><div style="font-size:10px;color:var(--green)">最低</div><div style="font-size:14px;font-weight:700;color:var(--green)">${mn}h</div></div>
+          <div style="background:var(--blue-bg);border-radius:8px;padding:6px"><div style="font-size:10px;color:var(--blue)">標準</div><div style="font-size:14px;font-weight:700;color:var(--blue)">${std}h</div></div>
+          <div style="background:var(--red-bg);border-radius:8px;padding:6px"><div style="font-size:10px;color:var(--red)">最大</div><div style="font-size:14px;font-weight:700;color:var(--red)">${mx}h</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--t3)">投稿 月${postTotal}回${a.total>0?`　撮影${a.shoot}h MTG${a.mtg}h`:""}</div>
+      </div>`;
+    }).join("");
+  } else if(analTab===2){
+    const taskMap={};
+    PROJECTS.forEach(p=>(p.tasks||[]).forEach(t=>{
+      const h=taskMonthH(t);
+      if(!taskMap[t.role])taskMap[t.role]={min:0,std:0,max:0};
+      taskMap[t.role].min+=h.min;taskMap[t.role].std+=h.std;taskMap[t.role].max+=h.max;
+    }));
+    const maxS=Math.max(...Object.values(taskMap).map(v=>v.std),1);
+    el.innerHTML=Object.entries(taskMap).sort((a,b)=>b[1].std-a[1].std).map(([role,h])=>`
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600">${esc(role)}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--blue)">${Math.round(h.std)}h/月</span>
+        </div>
+        <div class="wl-bar" style="height:8px;position:relative">
+          <div style="position:absolute;top:0;left:${Math.round(h.min/maxS*100)}%;width:${Math.round((h.max-h.min)/maxS*100)}%;height:100%;background:var(--blue);opacity:.18;border-radius:4px"></div>
+          <div class="wl-fill" style="width:${Math.round(h.std/maxS*100)}%;background:var(--blue)"></div>
+        </div>
+        <div class="cap-lbl" style="margin-top:3px"><span>最低${Math.round(h.min)}h</span><span>最大${Math.round(h.max)}h</span></div>
+      </div>`).join("");
+  } else {
+    el.innerHTML=`<div class="card">
+      <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:10px">実績 vs 標準工数</div>
+      ${PROJECTS.map(p=>(p.tasks||[]).filter(t=>t.actual!==null).map(t=>{
+        const h=taskMonthH(t);
+        const asSt=actualStatus(t.actual,h.min,h.max);
+        return`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:.5px solid var(--sep)">
+          <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">${esc(p.name)} · ${esc(t.role)}</div><div style="font-size:11px;color:var(--t3)">標準${h.std}h</div></div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:700;color:${asSt.color}">実績 ${t.actual}h</div>
+            <span class="tag" style="font-size:10px;background:${asSt.color}22;color:${asSt.color}">${asSt.label}</span>
+          </div>
+        </div>`;
+      }).join("")).join("")||`<div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">実績データなし</div>`}
+    </div>`;
+  }
+}
+function setAnalTab(i){analTab=i;renderAnal();}
+
+// ═══════════════════════════════════════════════════════════════════
+//  案件編集シート
+// ═══════════════════════════════════════════════════════════════════
+let EP=null; // edit project draft
+
+function openProjSheet(id){
+  const p=id?PROJECTS.find(x=>x.id===id):null;
+  EP=p?JSON.parse(JSON.stringify(p)):{
+    id:Date.now(),type:"運用",name:"新規案件",status:"未設定",
+    tasks:[],scheduleMode:"fixed",scheduleGroups:[],volumeTargets:{long:0,short:0},
+    owners:{front:"",producer:"",director:""},
+    meeting:{enabled:false,day:"月",time:"19:00",duration:1},
+    owners:{front:"",producer:"",director:""},
+    shooting:{enabled:false,hours:3,travelH:1,timesPerMonth:1,cameraman:""},
+    planning:{countPerMonth:0,hPerPlan:0},
+    deadline:""
+  };
+  document.getElementById("ps-title").textContent=id?"案件編集":"新規案件";
+  renderProjSheetBody();
+  openSheet("proj-sheet");
+}
+
+function renderProjSheetBody(){
+  const p=EP;
+  const tH=p.tasks.reduce((s,t)=>{const h=taskMonthH(t);return{min:s.min+h.min,std:s.std+h.std,max:s.max+h.max};},{min:0,std:0,max:0});
+  const a=addH(p);
+  const std=Math.round((tH.std+a.total)*10)/10;
+  const mn=Math.round((tH.min+a.total*0.8)*10)/10;
+  const mx=Math.round((tH.max+a.total*1.3)*10)/10;
+  const hc=std>50?"#ff3b30":std>30?"#ff9500":"#007aff";
+
+  document.getElementById("ps-body").innerHTML=`
+    <!-- バナー -->
+    <div id="ep-banner" class="h-banner" style="background:${hc}22;border:.5px solid ${hc}44;margin-bottom:14px">
+      <div>
+        <div style="font-size:12px;color:${hc};margin-bottom:3px">月間総工数（標準）</div>
+        <div style="font-size:11px;color:${hc}99">最低${mn}h 〜 最大${mx}h</div>
+      </div>
+      <div class="h-big" style="color:${hc}">${std}<span style="font-size:16px;font-weight:400">h</span></div>
+    </div>
+
+    <!-- 基本情報 -->
+    <div class="fc">
+      <div class="fc-title">基本情報</div>
+      <label class="flbl">案件名</label>
+      <input class="finp" value="${esc(p.name)}" oninput="EP.name=this.value" style="margin-bottom:10px">
+      <div class="fg2" style="margin-bottom:10px">
+        <div><label class="flbl">種別</label>
+          <select class="finp" onchange="EP.type=this.value">
+            <option${p.type==="運用"?" selected":""}>運用</option><option${p.type==="制作"?" selected":""}>制作</option>
+          </select></div>
+        <div><label class="flbl">ステータス</label>
+          <select class="finp" onchange="EP.status=this.value">
+            ${["企画中","撮影待ち","編集中","確認待ち","入稿済","未設定"].map(s=>`<option${p.status===s?" selected":""}>${s}</option>`).join("")}
+          </select></div>
+      </div>
+      <div style="height:.5px;background:var(--sep);margin-bottom:12px"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:10px">案件担当者</div>
+      ${[["front","フロント担当"],["producer","プロデューサー"],["director","ディレクター"]].map(([key,label])=>{
+        const val=(p.owners||{})[key]||"";
+        const c=val&&val!=="外注"?mc(val):"#8e8e93";
+        return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:7px;height:7px;border-radius:50%;background:${c};flex-shrink:0"></div>
+          <label style="font-size:12px;font-weight:600;color:var(--t2);width:100px;flex-shrink:0">${label}</label>
+          <select class="finp" style="flex:1" onchange="if(!EP.owners)EP.owners={};EP.owners['${key}']=this.value">
+            <option value="">未設定</option>
+            ${MEMBERS.map(m=>`<option value="${esc(m.name)}"${val===m.name?" selected":""}>${esc(m.name)}</option>`).join("")}
+            <option value="外注"${val==="外注"?" selected":""}>外注</option>
+          </select>
+          ${val&&val!=="外注"?`<div style="width:28px;height:28px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${esc(val[0])}</div>`:`<div style="width:28px;height:28px;flex-shrink:0"></div>`}
+        </div>`;
+      }).join("")}
+    </div>
+
+    <!-- タスク工数 -->
+    <div class="fc">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="fc-title" style="margin:0">タスク工数設定</div>
+        <button onclick="addTask()" style="padding:5px 12px;border-radius:20px;border:.5px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer">＋ 追加</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">1日あたり工数 × 月作業日数 = 月間工数で自動集計</div>
+      <!-- プリセットボタン -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:500">よく使うタスクを追加</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${["企画作成","編集","サムネイル制作","ショート切り抜き","台本作成","投稿作業"].map(name=>`
+            <button onclick="addPresetTask('${name}')"
+              style="padding:5px 11px;border-radius:20px;border:.5px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:12px;cursor:pointer;white-space:nowrap">
+              ＋ ${name}
+            </button>`).join("")}
+        </div>
+      </div>
+      <div id="ep-tasks">${renderTasksHTML()}</div>
+    </div>
+
+    <!-- 投稿スケジュール -->
+    <div class="fc">
+      <div class="fc-title">投稿スケジュール管理</div>
+      <!-- モード選択 -->
+      <div class="mode-btns">
+        ${["fixed","volume","manual"].map((m,i)=>{
+          const labels=["① 固定曜日投稿","② 月間本数管理","③ 手動カレンダー登録"];
+          return`<button class="mode-btn${EP.scheduleMode===m?" on":""}" onclick="setSchedMode('${m}')">${labels[i]}</button>`;
+        }).join("")}
+      </div>
+      <!-- モード説明 -->
+      ${EP.scheduleMode==="fixed"
+        ?`<div style="font-size:12px;color:var(--blue);background:var(--blue-bg);border-radius:8px;padding:8px 12px;margin-bottom:12px">毎週決まった曜日・時間に投稿する案件。曜日を複数選択して登録します。</div>`
+        :EP.scheduleMode==="volume"
+        ?`<div style="font-size:12px;color:var(--green);background:var(--green-bg);border-radius:8px;padding:8px 12px;margin-bottom:12px">曜日が固定されていない案件。ロング・ショート別に月間の目標本数を設定します。</div>`
+        :`<div style="font-size:12px;color:var(--orange);background:var(--orange-bg);border-radius:8px;padding:8px 12px;margin-bottom:12px">毎月投稿日が変わる案件。カレンダー画面から投稿予定を1件ずつ手動登録します。</div>`
+      }
+      <!-- 固定曜日モード -->
+      ${EP.scheduleMode==="fixed"?`
+      <div id="ep-scheds">${renderSchedsHTML()}</div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <button onclick="addSchedGroup('ロング')" style="flex:1;padding:10px;border-radius:10px;border:.5px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-size:13px;font-weight:600;cursor:pointer">＋ ロング追加</button>
+        <button onclick="addSchedGroup('ショート')" style="flex:1;padding:10px;border-radius:10px;border:.5px solid var(--purple);background:var(--purple-bg);color:var(--purple);font-size:13px;font-weight:600;cursor:pointer">＋ ショート追加</button>
+        <button onclick="addSchedGroup('その他')" style="padding:10px 12px;border-radius:10px;border:.5px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:13px;cursor:pointer">＋</button>
+      </div>`:""}
+      <!-- 月間本数モード -->
+      ${EP.scheduleMode==="volume"?`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--blue-bg);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:12px;color:var(--blue);margin-bottom:8px;font-weight:600">ロング動画 / 月</div>
+          <input class="finp" type="number" min="0" value="${EP.volumeTargets?.long||0}" oninput="EP.volumeTargets.long=+this.value"
+            style="font-size:28px;font-weight:800;text-align:center;background:transparent;border:none;color:var(--blue);width:100%;outline:none;padding:0">
+          <div style="font-size:11px;color:var(--blue);margin-top:4px">本</div>
+        </div>
+        <div style="background:var(--purple-bg);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:12px;color:var(--purple);margin-bottom:8px;font-weight:600">ショート動画 / 月</div>
+          <input class="finp" type="number" min="0" value="${EP.volumeTargets?.short||0}" oninput="EP.volumeTargets.short=+this.value"
+            style="font-size:28px;font-weight:800;text-align:center;background:transparent;border:none;color:var(--purple);width:100%;outline:none;padding:0">
+          <div style="font-size:11px;color:var(--purple);margin-top:4px">本</div>
+        </div>
+      </div>`:""}
+      <!-- 手動モード -->
+      ${EP.scheduleMode==="manual"?`
+      <div style="background:var(--orange-bg);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:13px;color:var(--orange);font-weight:600;margin-bottom:4px">📅 カレンダーから手動登録</div>
+        <div style="font-size:12px;color:var(--orange)">保存後、カレンダー画面から<br>「投稿予定を追加」で登録できます</div>
+      </div>`:""}
+    </div>
+
+    <!-- 定例会議 -->
+    <div class="fc">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="fc-title" style="margin:0">定例会議</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" ${p.meeting?.enabled?"checked":""} onchange="EP.meeting.enabled=this.checked;rerenderProjSheet()">あり
+        </label>
+      </div>
+      ${p.meeting?.enabled?`
+      <div class="fg3">
+        <div><label class="flbl">曜日</label>
+          <select class="finp" onchange="EP.meeting.day=this.value">
+            ${WEEK_DAYS.map(d=>`<option${p.meeting.day===d?" selected":""}>${d}</option>`).join("")}
+          </select></div>
+        <div><label class="flbl">時間</label><input class="finp" type="time" value="${p.meeting.time||""}" oninput="EP.meeting.time=this.value"></div>
+        <div><label class="flbl">所要(h)</label><input class="finp" type="number" step="0.5" value="${p.meeting.duration||""}" oninput="EP.meeting.duration=+this.value"></div>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:var(--pink)">月間会議: 約${Math.round((p.meeting.duration||0)*4.3*10)/10}h</div>`
+      :"<div style='font-size:12px;color:var(--t3)'>定例なし</div>"}
+    </div>
+
+    <!-- 撮影管理 -->
+    <div class="fc">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="fc-title" style="margin:0">撮影管理</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" ${p.shooting?.enabled?"checked":""} onchange="EP.shooting.enabled=this.checked;rerenderProjSheet()">あり
+        </label>
+      </div>
+      ${p.shooting?.enabled?`
+      <!-- 撮影時間・頻度 -->
+      <div class="fg3" style="margin-bottom:10px">
+        <div><label class="flbl">撮影時間(h)</label><input class="finp" type="number" step="0.5" value="${p.shooting.hours||""}" oninput="EP.shooting.hours=+this.value;updateBanner();updateShootPreview()"></div>
+        <div><label class="flbl">移動往復(h)</label><input class="finp" type="number" step="0.5" value="${p.shooting.travelH||""}" oninput="EP.shooting.travelH=+this.value;updateBanner();updateShootPreview()"></div>
+        <div><label class="flbl">回/月</label><input class="finp" type="number" value="${p.shooting.timesPerMonth||""}" oninput="EP.shooting.timesPerMonth=+this.value;updateBanner();updateShootPreview()"></div>
+      </div>
+      <!-- 1回あたり工数プレビュー -->
+      <div id="shoot-preview" style="background:var(--orange-bg);border-radius:10px;padding:10px 14px;margin-bottom:14px">
+        ${(()=>{
+          const perH=(p.shooting.hours||0)+(p.shooting.travelH||0);
+          const totalH=perH*(p.shooting.timesPerMonth||0);
+          return`<div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:11px;color:var(--orange);margin-bottom:2px">1回あたり</div>
+              <div style="font-size:16px;font-weight:700;color:var(--orange)">${perH}h <span style="font-size:11px;font-weight:400">（撮影${p.shooting.hours||0}h＋移動${p.shooting.travelH||0}h）</span></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:var(--orange);margin-bottom:2px">月間合計</div>
+              <div style="font-size:20px;font-weight:800;color:var(--orange)">${totalH}h</div>
+            </div>
+          </div>`;
+        })()}
+      </div>
+      <!-- 撮影担当者（カメラマンのみ） -->
+      <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px">
+        撮影担当者（カメラマン）
+        <span style="font-size:11px;font-weight:400">― 撮影工数はこの担当者のみに反映</span>
+      </div>
+      ${(()=>{
+        const s=p.shooting;
+        const camVal=s.cameraman||"";
+        const perH=(s.hours||0)+(s.travelH||0);
+        const totalH=Math.round(perH*(s.timesPerMonth||0)*10)/10;
+        const hasVal=camVal&&camVal!=="外注"&&camVal!=="";
+        const c=hasVal?mc(camVal):"#8e8e93";
+        return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <select class="finp" style="flex:1;font-size:14px;font-weight:500" onchange="EP.shooting.cameraman=this.value">
+            <option value="">未設定</option>
+            ${MEMBERS.map(m=>`<option value="${esc(m.name)}"${camVal===m.name?" selected":""}>${esc(m.name)}</option>`).join("")}
+            <option value="外注"${camVal==="外注"?" selected":""}>外注</option>
+          </select>
+          ${hasVal?`<div style="width:36px;height:36px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${esc(camVal[0])}</div>`:""}
+        </div>
+        ${hasVal&&totalH>0?`<div style="background:var(--bg2);border-radius:10px;padding:10px 12px;border:.5px solid var(--sep)">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:500">工数反映</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${esc(camVal[0])}</div>
+              <span style="font-size:13px;font-weight:600">${esc(camVal)}</span>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:var(--t3)">撮影${s.hours||0}h＋移動${s.travelH||0}h × 月${s.timesPerMonth||0}回</div>
+              <div style="font-size:16px;font-weight:800;color:var(--orange)">月${totalH}h 反映</div>
+            </div>
+          </div>
+        </div>`:""}`;
+      })()}`
+      :"<div style='font-size:12px;color:var(--t3)'>撮影なし</div>"}
+    </div>
+
+
+
+    <button onclick="deleteProjSheet()" style="width:100%;margin-top:4px;padding:14px;border-radius:14px;border:none;background:var(--red-bg);color:var(--red);font-size:14px;font-weight:600;cursor:pointer">案件を削除</button>
+    <div style="height:20px"></div>
+  `;
+}
+
+// ── タスク色定義 ──────────────────────────────────────────
+const TASK_COLORS={
+  "企画":"#34c759","台本":"#30d158",
+  "編集":"#007aff","ロング":"#0a84ff","切り抜き":"#5856d6","ショート":"#5856d6",
+  "サムネ":"#5856d6","投稿":"#ff9500","週報":"#5ac8fa","管理":"#5ac8fa",
+  "撮影":"#ff6b35","default":"#8e8e93"
+};
+function taskColor(role){
+  for(const [k,c] of Object.entries(TASK_COLORS)){
+    if(role&&role.includes(k)) return c;
+  }
+  return TASK_COLORS.default;
+}
+
+// 月間表示を個別更新（DOM再生成しない）
+function updateTaskDisplay(id){
+  if(!EP) return;
+  const t = EP.tasks.find(x=>x.id===id);
+  if(!t) return;
+  const monthH   = Math.round(t.dailyStd  *(t.daysPerMonth||0)*10)/10;
+  const monthMin = Math.round(t.dailyMin  *(t.daysPerMonth||0)*10)/10;
+  const monthMax = Math.round(t.dailyMax  *(t.daysPerMonth||0)*10)/10;
+  const bannerEl = document.getElementById("tbanner-"+id);
+  const monthEl  = document.getElementById("tmonth-"+id);
+  const month2El = document.getElementById("tmonth2-"+id);
+  if(bannerEl)  bannerEl.textContent = `最低 ${monthMin}h 〜 最大 ${monthMax}h`;
+  if(monthEl)   monthEl.textContent  = String(monthH);
+  if(month2El)  month2El.textContent = String(monthH);
+  updateBanner();
+}
+
+function renderTasksHTML(){
+  if(!EP) return "";
+  if(!EP.tasks||EP.tasks.length===0)
+    return `<div style="text-align:center;padding:16px;color:var(--t3);font-size:13px">
+      ↑ よく使うタスクから追加するか「＋ 追加」を押してください
+    </div>`;
+
+  return EP.tasks.map(t=>{
+    const monthH   = Math.round(t.dailyStd  *(t.daysPerMonth||0)*10)/10;
+    const monthMin = Math.round(t.dailyMin  *(t.daysPerMonth||0)*10)/10;
+    const monthMax = Math.round(t.dailyMax  *(t.daysPerMonth||0)*10)/10;
+    const tc  = taskColor(t.role||"");
+    const hasM = t.member && t.member!=="外注" && t.member!=="";
+    const mc_ = hasM ? mc(t.member) : "#8e8e93";
+
+    return `<div style="background:var(--bg2);border-radius:12px;padding:12px;margin-bottom:10px;border-left:3px solid ${tc}">
+
+      <!-- 行1: タスク名 + 担当者 + 削除 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="flex:1;min-width:0">
+          <input class="finp" value="${esc(t.role)}" placeholder="タスク名（例：企画作成）"
+            style="font-size:14px;font-weight:700;padding:7px 10px"
+            onchange="updateTask(${t.id},'role',this.value)">
+        </div>
+        <div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px">
+          <select class="finp" style="flex:1;font-size:13px;padding:7px 10px"
+            onchange="updateTask(${t.id},'member',this.value)">
+            <option value="">担当者未設定</option>
+            ${MEMBERS.map(m=>`<option value="${esc(m.name)}"${t.member===m.name?" selected":""}>${esc(m.name)}</option>`).join("")}
+            <option value="外注"${t.member==="外注"?" selected":""}>外注</option>
+          </select>
+          ${hasM?`<div style="width:28px;height:28px;border-radius:50%;background:${mc_}22;color:${mc_};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${esc(t.member[0])}</div>`:""}
+        </div>
+        <button onclick="removeTask(${t.id})" class="rm-btn" style="flex-shrink:0">×</button>
+      </div>
+
+      <!-- 月間工数バナー（id付きで個別更新） -->
+      <div id="tborder-${t.id}" style="background:${tc}18;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;border:.5px solid ${tc}44">
+        <div id="tbanner-${t.id}" style="font-size:11px;color:${tc}">最低 ${monthMin}h 〜 最大 ${monthMax}h</div>
+        <div style="font-size:18px;font-weight:800;color:${tc}">
+          <span id="tmonth-${t.id}">${monthH}</span><span style="font-size:11px;font-weight:400">h/月</span>
+        </div>
+      </div>
+
+      <!-- 三点見積もり（1日あたり）─ oninput は値更新+表示更新のみ、DOM再生成なし -->
+      <div style="font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:600">1日あたりの工数（h）</div>
+      <div class="fg3" style="margin-bottom:10px">
+        <div>
+          <input class="finp" type="number" step="0.25" value="${t.dailyMin||""}" placeholder="0"
+            style="text-align:center;font-size:16px;font-weight:600;color:var(--green)"
+            oninput="updateTask(${t.id},'dailyMin',+this.value);updateTaskDisplay(${t.id})">
+          <div style="font-size:10px;color:var(--green);text-align:center;margin-top:3px;font-weight:600">最低（楽観）</div>
+        </div>
+        <div>
+          <input class="finp" type="number" step="0.25" value="${t.dailyStd||""}" placeholder="0"
+            style="text-align:center;font-size:16px;font-weight:700;color:${tc}"
+            oninput="updateTask(${t.id},'dailyStd',+this.value);updateTaskDisplay(${t.id})">
+          <div style="font-size:10px;text-align:center;margin-top:3px;font-weight:700;color:${tc}">標準</div>
+        </div>
+        <div>
+          <input class="finp" type="number" step="0.25" value="${t.dailyMax||""}" placeholder="0"
+            style="text-align:center;font-size:16px;font-weight:600;color:var(--red)"
+            oninput="updateTask(${t.id},'dailyMax',+this.value);updateTaskDisplay(${t.id})">
+          <div style="font-size:10px;color:var(--red);text-align:center;margin-top:3px;font-weight:600">最大（悲観）</div>
+        </div>
+      </div>
+
+      <!-- 月作業日数 -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1">
+          <label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">月の作業日数 / 回数</label>
+          <input class="finp" type="number" value="${t.daysPerMonth||""}" placeholder="例: 20"
+            style="text-align:center;font-size:16px;font-weight:600"
+            oninput="updateTask(${t.id},'daysPerMonth',+this.value);updateTaskDisplay(${t.id})">
+        </div>
+        <div style="font-size:22px;color:var(--t3);flex-shrink:0">×</div>
+        <div id="tborder-month-${t.id}" style="flex:1;text-align:center">
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:4px">月間合計</div>
+          <div id="tborder-${t.id}-box" style="background:${tc}18;border-radius:10px;padding:8px;border:.5px solid ${tc}44">
+            <div style="font-size:22px;font-weight:800;color:${tc}">
+              <span id="tmonth2-${t.id}">${monthH}</span><span style="font-size:11px;font-weight:400">h</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderSchedsHTML(){
+  if(!EP) return "";
+  return (EP.scheduleGroups||[]).map(sg=>{
+    const tc=sg.type==="ロング"?"var(--blue)":sg.type==="ショート"?"var(--purple)":"var(--orange)";
+    const tb=sg.type==="ロング"?"var(--blue-bg)":sg.type==="ショート"?"var(--purple-bg)":"var(--orange-bg)";
+    const now=new Date();
+    const cnt=monthlyPostCount(sg,now.getFullYear(),now.getMonth());
+    return`<div class="sched-block" style="margin-bottom:10px">
+      <div class="sched-block-hdr">
+        <div class="type-toggle">
+          ${["ロング","ショート","その他"].map(tp=>`<button class="type-btn${sg.type===tp?" on-"+(tp==="ロング"?"long":tp==="ショート"?"short":"other"):"" }" onclick="updateSG(${sg.id},'type','${tp}')">${tp}</button>`).join("")}
+        </div>
+        <button onclick="removeSG(${sg.id})" class="rm-btn">×</button>
+      </div>
+
+      <!-- 曜日チェックボックス -->
+      <div style="font-size:11px;color:var(--t3);font-weight:500;margin-bottom:6px">投稿曜日（複数選択可）</div>
+      <div class="day-checks">
+        ${WEEK_DAYS.map(d=>`
+          <label class="day-cb">
+            <input type="checkbox" ${sg.days.includes(d)?"checked":""} onchange="toggleSGDay(${sg.id},'${d}',this.checked)">
+            <span style="${sg.days.includes(d)?`background:${tc};color:#fff;border-color:${tc};font-weight:700`:""}">${d}</span>
+          </label>`).join("")}
+      </div>
+
+      <!-- 現在の設定プレビュー -->
+      ${sg.days.length>0?`<div style="background:${tb};border-radius:10px;padding:10px 14px;margin-bottom:10px;border:.5px solid ${tc}33">
+        <div style="font-size:11px;color:${tc};margin-bottom:3px;font-weight:500">${esc(sg.freq)} · 月${cnt}回投稿</div>
+        <div style="font-size:15px;font-weight:700;color:${tc}">${esc(sg.type)}　${sg.days.join(" · ")}曜　${esc(sg.time)}</div>
+      </div>`:
+      `<div style="background:var(--bg3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--t3)">曜日を選択してください</div>`}
+
+      <div class="fg2" style="margin-top:0">
+        <div>
+          <label class="flbl">投稿時間</label>
+          <input class="finp" type="time" value="${sg.time||""}" oninput="updateSG(${sg.id},'time',this.value);reRenderScheds()" style="font-size:16px;font-weight:700;text-align:center">
+        </div>
+        <div>
+          <label class="flbl">頻度</label>
+          <select class="finp" onchange="updateSG(${sg.id},'freq',this.value);reRenderScheds()">
+            ${["毎週","隔週","月1","月2","不定期"].map(f=>`<option${sg.freq===f?" selected":""}>${f}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label class="flbl">メモ</label>
+        <input class="finp" value="${esc(sg.note||"")}" placeholder="例：アーカイブあり" oninput="updateSG(${sg.id},'note',this.value)" style="font-size:13px">
+      </div>
+    </div>`;
+  }).join("")||`<div style="text-align:center;padding:12px;color:var(--t3);font-size:13px">スケジュールを追加してください</div>`;
+}
+
+// タスク操作
+// プリセット工数（1日あたりh、月作業日数）
+const TASK_PRESETS={
+  "企画作成":    {dailyMin:0.25, dailyStd:0.4,  dailyMax:0.6,  daysPerMonth:15},
+  "編集":        {dailyMin:3,    dailyStd:5,    dailyMax:8,    daysPerMonth:4},
+  "サムネイル制作":{dailyMin:0.3, dailyStd:0.5,  dailyMax:0.75, daysPerMonth:20},
+  "ショート切り抜き":{dailyMin:2, dailyStd:3,    dailyMax:5,    daysPerMonth:4},
+  "台本作成":    {dailyMin:1,    dailyStd:2,    dailyMax:3,    daysPerMonth:4},
+  "投稿作業":    {dailyMin:0.1,  dailyStd:0.15, dailyMax:0.25, daysPerMonth:20},
+};
+function addTask(role="",preset=null){
+  if(!EP) return;
+  const p=preset||TASK_PRESETS[role]||{dailyMin:0,dailyStd:0,dailyMax:0,daysPerMonth:0};
+  EP.tasks.push({id:Date.now(),role,member:"",...p,actual:null});
+  document.getElementById("ep-tasks").innerHTML=renderTasksHTML();
+  updateBanner();
+}
+function addPresetTask(name){
+  addTask(name, TASK_PRESETS[name]);
+}
+function removeTask(id){
+  if(!EP) return;
+  EP.tasks=EP.tasks.filter(t=>t.id!==id);
+  document.getElementById("ep-tasks").innerHTML=renderTasksHTML();
+  updateBanner();
+}
+function updateTask(id,key,val){
+  if(!EP) return;
+  const t=EP.tasks.find(x=>x.id===id);
+  if(t) t[key]=val;
+}
+
+// スケジュールグループ操作
+function addSchedGroup(type){
+  if(!EP) return;
+  EP.scheduleGroups.push({id:Date.now(),type,days:[],time:"18:00",freq:"毎週",note:""});
+  document.getElementById("ep-scheds").innerHTML=renderSchedsHTML();
+}
+function removeSG(id){
+  if(!EP) return;
+  EP.scheduleGroups=EP.scheduleGroups.filter(sg=>sg.id!==id);
+  document.getElementById("ep-scheds").innerHTML=renderSchedsHTML();
+}
+function updateSG(id,key,val){
+  if(!EP) return;
+  const sg=EP.scheduleGroups.find(x=>x.id===id);
+  if(sg) sg[key]=val;
+}
+function toggleSGDay(id,day,checked){
+  if(!EP) return;
+  const sg=EP.scheduleGroups.find(x=>x.id===id);
+  if(!sg) return;
+  if(checked){if(!sg.days.includes(day))sg.days.push(day);}
+  else{sg.days=sg.days.filter(d=>d!==day);}
+  // 曜日を月火水木金土日順にソート
+  const order={月:0,火:1,水:2,木:3,金:4,土:5,日:6};
+  sg.days.sort((a,b)=>(order[a]??7)-(order[b]??7));
+  reRenderScheds();
+}
+function reRenderScheds(){
+  const el=document.getElementById("ep-scheds");
+  if(el) el.innerHTML=renderSchedsHTML();
+}
+function rerenderProjSheet(){renderProjSheetBody();}
+function setSchedMode(mode){
+  if(!EP) return;
+  EP.scheduleMode=mode;
+  if(!EP.volumeTargets) EP.volumeTargets={long:0,short:0};
+  renderProjSheetBody();
+}
+
+// バナー更新（リアルタイム）
+function updateShootPreview(){
+  if(!EP||!EP.shooting?.enabled) return;
+  const el=document.getElementById("shoot-preview");
+  if(!el) return;
+  const s=EP.shooting;
+  const perH=(s.hours||0)+(s.travelH||0);
+  const totalH=Math.round(perH*(s.timesPerMonth||0)*10)/10;
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:11px;color:var(--orange);margin-bottom:2px">1回あたり</div>
+      <div style="font-size:16px;font-weight:700;color:var(--orange)">${perH}h <span style="font-size:11px;font-weight:400">（撮影${s.hours||0}h＋移動${s.travelH||0}h）</span></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:var(--orange);margin-bottom:2px">月間合計</div>
+      <div style="font-size:20px;font-weight:800;color:var(--orange)">${totalH}h</div>
+    </div>
+  </div>`;
+}
+
+function updateBanner(){
+  if(!EP) return;
+  const tH=EP.tasks.reduce((s,t)=>{const h=taskMonthH(t);return{min:s.min+h.min,std:s.std+h.std,max:s.max+h.max};},{min:0,std:0,max:0});
+  const a=addH(EP);
+  const std=Math.round((tH.std+a.total)*10)/10;
+  const mn=Math.round((tH.min+a.total*0.8)*10)/10;
+  const mx=Math.round((tH.max+a.total*1.3)*10)/10;
+  const hc=std>50?"#ff3b30":std>30?"#ff9500":"#007aff";
+  const banner=document.getElementById("ep-banner");
+  if(!banner) return;
+  banner.style.background=hc+"22";
+  banner.style.border=`.5px solid ${hc}44`;
+  banner.querySelector(".h-big").style.color=hc;
+  banner.querySelector(".h-big").innerHTML=`${std}<span style="font-size:16px;font-weight:400">h</span>`;
+}
+
+function saveProjSheet(){
+  if(!EP) return;
+  const idx=PROJECTS.findIndex(p=>p.id===EP.id);
+  if(idx>=0)PROJECTS[idx]=JSON.parse(JSON.stringify(EP));
+  else PROJECTS.push(JSON.parse(JSON.stringify(EP)));
+  closeSheet("proj-sheet");
+  toast("保存しました ✓");
+  if(currentNav==="proj")   renderProj();
+  if(currentNav==="dash")   renderDash();
+  if(currentNav==="cal")    renderCal();
+}
+function deleteProjSheet(){
+  if(!EP||!confirm("この案件を削除しますか？"))return;
+  PROJECTS=PROJECTS.filter(p=>p.id!==EP.id);
+  closeSheet("proj-sheet");
+  toast("削除しました");
+  if(currentNav==="proj") renderProj();
+  if(currentNav==="dash") renderDash();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  メンバー編集
+// ═══════════════════════════════════════════════════════════════════
+let EM=null;
+function openMbrSheet(id){
+  const m=id?MEMBERS.find(x=>x.id===id):null;
+  EM=m?{...m}:{id:Date.now(),name:"",color:MEMBER_COLORS[ci%MEMBER_COLORS.length],maxCap:160,weekCap:40};
+  document.getElementById("mbr-body").innerHTML=`
+    <div class="fc">
+      <label class="flbl">名前</label>
+      <input class="finp" value="${esc(EM.name)}" oninput="EM.name=this.value" style="margin-bottom:10px">
+      <div class="fg2">
+        <div><label class="flbl">月間最大キャパ(h)</label><input class="finp" type="number" value="${EM.maxCap}" oninput="EM.maxCap=+this.value"></div>
+        <div><label class="flbl">週最大キャパ(h)</label><input class="finp" type="number" value="${EM.weekCap}" oninput="EM.weekCap=+this.value"></div>
+      </div>
+    </div>
+    ${id?`<button onclick="deleteMbr(${id})" style="width:100%;padding:14px;border-radius:14px;border:none;background:var(--red-bg);color:var(--red);font-size:14px;font-weight:600;cursor:pointer">削除</button>`:""}
+  `;
+  openSheet("mbr-sheet");
+}
+function saveMbrSheet(){
+  if(!EM)return;
+  const idx=MEMBERS.findIndex(m=>m.id===EM.id);
+  if(idx>=0)MEMBERS[idx]={...EM};else MEMBERS.push({...EM});
+  closeSheet("mbr-sheet");toast("保存しました ✓");renderMember();
+}
+function deleteMbr(id){
+  if(!confirm("削除しますか？"))return;
+  MEMBERS=MEMBERS.filter(m=>m.id!==id);
+  closeSheet("mbr-sheet");toast("削除しました");renderMember();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  実績入力
+// ═══════════════════════════════════════════════════════════════════
+let actMbrId=null;
+function openActSheet(memberId){
+  actMbrId=memberId;
+  const m=MEMBERS.find(x=>x.id===memberId);
+  const h=memberMonthH(m.name);
+  document.getElementById("act-body").innerHTML=`<div class="fc">
+    <div class="fc-title">${esc(m.name)} の実績入力</div>
+    ${h.breakdown.filter(b=>b.taskRef).map(b=>{
+      const t=b.taskRef;
+      const asSt=t.actual!==null?actualStatus(t.actual,b.min,b.max):null;
+      return`<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:12px;font-weight:600;margin-bottom:2px">${esc(b.proj)} · ${esc(b.role)}</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:6px">${t.dailyStd}h/日 × ${t.daysPerMonth}日 = 標準${b.std}h　範囲${b.min}〜${b.max}h</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input class="finp" type="number" step="0.5" value="${t.actual||""}" placeholder="実績h"
+            oninput="setActual('${esc(b.proj)}',${t.id},this.value)"
+            style="flex:1;text-align:center;font-size:16px;font-weight:600">
+          ${asSt?`<span class="tag" style="background:${asSt.color}22;color:${asSt.color};flex-shrink:0">${asSt.label}</span>`:`<span style="font-size:12px;color:var(--t3);flex-shrink:0">未入力</span>`}
+        </div>
+      </div>`;
+    }).join("")||`<div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">タスクがありません</div>`}
+  </div>`;
+  openSheet("act-sheet");
+}
+function setActual(projName,taskId,val){
+  const proj=PROJECTS.find(p=>p.name===projName);
+  if(!proj)return;
+  const t=(proj.tasks||[]).find(x=>x.id===taskId);
+  if(t) t.actual=val===""?null:+val;
+  openActSheet(actMbrId);
+}
+function saveActSheet(){closeSheet("act-sheet");toast("実績を保存しました ✓");renderMember();}
+
+function saveGasUrl(){
+  const url=(document.getElementById("conf-gas-url")||{}).value||"";
+  const res=document.getElementById("conf-gas-result");
+  if(!url){ if(res)res.textContent="URLを入力してください"; return; }
+  localStorage.setItem("rm_gas_url", url);
+  if(res) res.textContent="接続テスト中...";
+  fetch(url+"?action=ping",{redirect:"follow"})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.ok){ if(res)res.textContent="✓ 接続成功！再読み込みします..."; setTimeout(()=>location.reload(),1500); }
+      else { if(res)res.textContent="⚠ エラー: "+(d.error||""); }
+    })
+    .catch(e=>{ if(res)res.textContent="⚠ 接続失敗: "+e.message; });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  設定画面
+// ═══════════════════════════════════════════════════════════════════
+function renderConf(){
+  // ストレージ状態
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const used = raw ? new Blob([raw]).size : 0;
+  const usedKB = (used/1024).toFixed(1);
+  const savedAt = raw ? (JSON.parse(raw).savedAt||"").replace("T"," ").slice(0,16) : "-";
+  const storedVersion = raw ? (JSON.parse(raw).version||"?") : "-";
+
+  document.getElementById("conf-storage-status").innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="kpi" style="padding:10px">
+        <div class="kpi-l">保存日時</div>
+        <div style="font-size:12px;font-weight:600;color:var(--t1);line-height:1.3">${savedAt}</div>
+      </div>
+      <div class="kpi" style="padding:10px">
+        <div class="kpi-l">データサイズ</div>
+        <div style="font-size:16px;font-weight:700;color:var(--blue)">${usedKB} KB</div>
+      </div>
+      <div class="kpi" style="padding:10px">
+        <div class="kpi-l">ステータス</div>
+        <div style="font-size:12px;font-weight:700;color:${raw?"var(--green)":"var(--orange)"}">${raw?"✓ 保存済":"未保存"}</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--t3)">
+      ${raw
+        ? `案件 ${PROJECTS.length}件・メンバー ${MEMBERS.length}名・手動イベント ${MANUAL_EVENTS.length}件 を保存中`
+        : "データはまだ保存されていません。案件編集・メンバー編集を行うと自動保存されます。"}
+    </div>`;
+
+  // システム情報
+  document.getElementById("conf-sysinfo").innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${[
+        ["アプリバージョン", `v${DB_VERSION}`],
+        ["データスキーマ", `v${storedVersion} → v${DB_VERSION}${storedVersion<DB_VERSION?" (マイグレーション済)":""}`],
+        ["案件数", `${PROJECTS.length}件`],
+        ["メンバー数", `${MEMBERS.length}名`],
+        ["手動投稿イベント", `${MANUAL_EVENTS.length}件`],
+        ["ストレージ", "localStorage（端末内保存）"],
+      ].map(([k,v])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--sep)">
+          <span style="font-size:12px;color:var(--t3)">${k}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--t1)">${v}</span>
+        </div>`).join("")}
+    </div>`;
+
+  // メンバー一覧
+  document.getElementById("conf-members").innerHTML=MEMBERS.map(m=>{
+    const h=memberMonthH(m.name);
+    const pct=Math.min(100,Math.round(h.std/m.maxCap*100));
+    const st=capStatus(h.std,m.maxCap);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--sep);cursor:pointer" onclick="openMbrSheet(${m.id})">
+      <div class="av" style="background:${m.color}22;color:${m.color};width:32px;height:32px;font-size:12px">${esc(m.name[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${esc(m.name)}</div>
+        <div style="font-size:11px;color:var(--t3)">最大 ${m.maxCap}h/月　週 ${m.weekCap}h</div>
+      </div>
+      <span class="tag" style="background:${st.bg};color:${st.color};font-size:10px">${pct}%</span>
+      <span style="color:var(--t3);font-size:16px">›</span>
+    </div>`;
+  }).join("")||`<div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">メンバーがいません</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  永続化ストレージ（localStorage）＋ マイグレーション
+// ═══════════════════════════════════════════════════════════════════
+
+const DB_VERSION  = 32;
+const STORAGE_KEY = "rm_data_v1";
+
+// GAS URL（設定画面またはここに直接貼り付け）
+const GAS_URL_HARD = "";
+const GAS_URL = GAS_URL_HARD || localStorage.getItem("rm_gas_url") || "";
+let   IS_ONLINE = GAS_URL !== "";
+let   SYNCING   = false;
+
+// ── デフォルト値ファクトリ（新項目追加時はここに追記） ──────────
+const MEMBER_DEFAULTS  = {maxCap:160, weekCap:40, color:"#8e8e93"};
+const PROJECT_DEFAULTS = {
+  type:"運用", status:"未設定", tasks:[], scheduleMode:"fixed",
+  scheduleGroups:[], volumeTargets:{long:0,short:0},
+  owners:{front:"",producer:"",director:""},
+  shooting:{enabled:false,hours:0,travelH:0,timesPerMonth:0,cameraman:""},
+  planning:{countPerMonth:0,hPerPlan:0},
+  meeting:{enabled:false,day:"",time:"",duration:0},
+  deadline:""
+};
+const TASK_DEFAULTS = {
+  role:"", member:"", dailyMin:0, dailyStd:0, dailyMax:0,
+  daysPerMonth:0, actual:null
+};
+const SCHED_GROUP_DEFAULTS = {
+  type:"ロング", days:[], time:"18:00", freq:"毎週", note:""
+};
+const MANUAL_EVENT_DEFAULTS = {
+  projId:null, type:"ロング", date:"", time:"19:00", note:"", actual:false
+};
+const OWNERS_DEFAULTS  = {front:"",producer:"",director:""};
+const SHOOTING_DEFAULTS= {enabled:false,hours:0,travelH:0,timesPerMonth:0,cameraman:""};
+
+// ── オブジェクトに不足フィールドを補完（再帰） ──────────────────
+function fillDefaults(obj, defaults){
+  if(!obj || typeof obj !== "object") return obj;
+  const result = {...obj};
+  for(const [k,v] of Object.entries(defaults)){
+    if(result[k] === undefined || result[k] === null){
+      result[k] = typeof v === "object" && !Array.isArray(v) ? {...v} : v;
+    } else if(typeof v === "object" && !Array.isArray(v) && typeof result[k] === "object"){
+      result[k] = fillDefaults(result[k], v);
+    }
+  }
+  return result;
+}
+
+// ── マイグレーション関数（バージョンごとに追記） ────────────────
+function migrate(data, fromVersion){
+  let d = data;
+  // v28未満: owners / scheduleMode / scheduleGroups / volumeTargets が未存在の可能性
+  if(fromVersion < 28){
+    d.projects = (d.projects||[]).map(p=>{
+      p = fillDefaults(p, PROJECT_DEFAULTS);
+      // planning が残っていた場合は保持（タスクに手動移行済みのものは無視）
+      p.tasks = (p.tasks||[]).map(t=>fillDefaults(t, TASK_DEFAULTS));
+      p.scheduleGroups = (p.scheduleGroups||[]).map(sg=>fillDefaults(sg, SCHED_GROUP_DEFAULTS));
+      return p;
+    });
+    d.members = (d.members||[]).map(m=>fillDefaults(m, MEMBER_DEFAULTS));
+    d.manualEvents = (d.manualEvents||[]).map(e=>fillDefaults(e, MANUAL_EVENT_DEFAULTS));
+  }
+  // ── 将来の追加例（コメントアウト） ──
+  // if(fromVersion < 29){ /* v29追加項目をここに */ }
+  // if(fromVersion < 30){ /* v30追加項目をここに */ }
+  return d;
+}
+
+// ── 保存 ─────────────────────────────────────────────────────────
+function _buildPayload(){
+  return {
+    version:      DB_VERSION,
+    savedAt:      new Date().toISOString(),
+    members:      MEMBERS,
+    projects:     PROJECTS,
+    manualEvents: MANUAL_EVENTS,
+  };
+}
+function saveLocal(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(_buildPayload())); }
+  catch(e){ console.warn("local save failed",e); }
+}
+function saveAll(){
+  saveLocal();
+  if(!IS_ONLINE || SYNCING) return;
+  SYNCING = true;
+  setSyncBadge("saving");
+  const body = JSON.stringify({action:"save",..._buildPayload()});
+  fetch(GAS_URL, {method:"POST", headers:{"Content-Type":"text/plain"}, body, redirect:"follow"})
+    .then(r=>r.json())
+    .then(d=>{ setSyncBadge(d.ok?"ok":"error"); })
+    .catch(()=>setSyncBadge("error"))
+    .finally(()=>{ SYNCING=false; });
+}
+function setSyncBadge(state){
+  const el=document.getElementById("sync-badge");
+  if(!el) return;
+  const m={ok:["✓ 同期済","var(--green)"],saving:["⟳ 保存中","var(--orange)"],error:["⚠ エラー","var(--red)"],off:["ローカル","var(--t3)"]};
+  const [txt,col]=m[state]||m.off;
+  el.textContent=txt; el.style.color=col;
+}
+
+
+function applyPayload(payload){
+  const fromVersion = payload.version || 0;
+  const migrated = migrate(payload, fromVersion);
+  if(Array.isArray(migrated.members)      && migrated.members.length)      MEMBERS       = migrated.members;
+  if(Array.isArray(migrated.projects)     && migrated.projects.length)      PROJECTS      = migrated.projects;
+  if(Array.isArray(migrated.manualEvents))                                  MANUAL_EVENTS = migrated.manualEvents;
+  if(fromVersion < DB_VERSION) saveAll();
+}
+
+function _applyPayload(payload){
+  const fv = payload.version || 0;
+  const mg = migrate(payload, fv);
+  if(Array.isArray(mg.members)     && mg.members.length)     MEMBERS       = mg.members;
+  if(Array.isArray(mg.projects)    && mg.projects.length)    PROJECTS      = mg.projects;
+  if(Array.isArray(mg.manualEvents))                         MANUAL_EVENTS = mg.manualEvents;
+  if(fv < DB_VERSION) saveLocal();
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    _applyPayload(JSON.parse(raw));
+    return true;
+  } catch(e){ console.warn("local load failed",e); return false; }
+}
+function loadAll(){
+  loadLocal();
+  renderHeader(); renderDash(); // ローカルで即時描画
+  setSyncBadge(IS_ONLINE ? "saving" : "off");
+  if(!IS_ONLINE){ setSyncBadge("off"); return; }
+  fetch(GAS_URL + "?action=load", {redirect:"follow"})
+    .then(r=>r.json())
+    .then(d=>{
+      if(!d.ok) throw new Error(d.error||"load failed");
+      _applyPayload(d);
+      saveLocal();
+      setSyncBadge("ok");
+      renderHeader(); renderDash();
+      if(currentNav==="proj")   renderProj();
+      if(currentNav==="member") renderMember();
+      if(currentNav==="cal")    renderCal();
+    })
+    .catch(e=>{ console.warn("GAS load failed",e); setSyncBadge("error"); });
+}
+
+
+function loadFromLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    applyPayload(JSON.parse(raw));
+    return true;
+  } catch(e){
+    console.warn("localStorage load failed:", e);
+    return false;
+  }
+}
+
+// ── 全save関数にsaveAll()を注入 ────────────────────────────────
+// （既存のsave関数を上書きしてデータ永続化を追加）
+const _origSaveProjSheet = saveProjSheet;
+saveProjSheet = function(){
+  _origSaveProjSheet();
+  saveAll();
+};
+const _origSaveMbrSheet = saveMbrSheet;
+saveMbrSheet = function(){
+  _origSaveMbrSheet();
+  saveAll();
+};
+const _origSaveActSheet = saveActSheet;
+saveActSheet = function(){
+  _origSaveActSheet();
+  saveAll();
+};
+const _origSaveManualSheet = saveManualSheet;
+saveManualSheet = function(){
+  _origSaveManualSheet();
+  saveAll();
+};
+const _origDeleteManualEv = deleteManualEv;
+deleteManualEv = function(){
+  _origDeleteManualEv();
+  saveAll();
+};
+const _origDeleteMbr = deleteMbr;
+deleteMbr = function(id){
+  _origDeleteMbr(id);
+  saveAll();
+};
+const _origDeleteProjSheet = deleteProjSheet;
+deleteProjSheet = function(){
+  _origDeleteProjSheet();
+  // deleteProjSheet は confirm → closeSheet → toast の順なので
+  // グローバルの PROJECTS が変わった後に saveAll
+  setTimeout(saveAll, 100);
+};
+
+// ── エクスポート / インポート ────────────────────────────────────
+function exportData(){
+  const payload = {
+    version: DB_VERSION,
+    savedAt: new Date().toISOString(),
+    members: MEMBERS,
+    projects: PROJECTS,
+    manualEvents: MANUAL_EVENTS,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `rm_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast("バックアップをダウンロードしました");
+}
+
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const payload = JSON.parse(ev.target.result);
+      if(!payload.projects || !payload.members){
+        alert("ファイル形式が正しくありません");
+        return;
+      }
+      const fromVersion = payload.version || 0;
+      const migrated = migrate(payload, fromVersion);
+      MEMBERS       = migrated.members       || MEMBERS;
+      PROJECTS      = migrated.projects      || PROJECTS;
+      MANUAL_EVENTS = migrated.manualEvents  || MANUAL_EVENTS;
+      saveAll();
+      renderHeader(); renderDash();
+      toast("データをインポートしました ✓");
+    } catch(e){
+      alert("インポートに失敗しました: " + e.message);
+    }
+  };
+  reader.readAsText(file, "UTF-8");
+}
+
+function resetData(){
+  if(!confirm("⚠ すべてのデータを初期値にリセットします。\nこの操作は取り消せません。実行しますか？")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  if(IS_ONLINE){
+    fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain"},
+      body:JSON.stringify({action:"reset"}),redirect:"follow"}).catch(()=>{});
+  }
+  location.reload();
+}
+
+// ── 初期化 ────────────────────────────────────────────────────────
+loadAll();
+// 30秒ごとにGASから自動同期
+if(IS_ONLINE){
+  setInterval(()=>{
+    if(document.hidden||SYNCING) return;
+    fetch(GAS_URL+"?action=load",{redirect:"follow"})
+      .then(r=>r.json()).then(d=>{
+        if(!d.ok) return;
+        _applyPayload(d); saveLocal(); setSyncBadge("ok");
+        if(currentNav==="dash")   renderDash();
+        if(currentNav==="proj")   renderProj();
+        if(currentNav==="member") renderMember();
+        if(currentNav==="cal")    renderCal();
+      }).catch(()=>setSyncBadge("error"));
+  }, 30000);
+}
+</script>
+</body>
+</html>
